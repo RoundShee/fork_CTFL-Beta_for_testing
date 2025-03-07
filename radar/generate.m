@@ -1,34 +1,34 @@
-% SampFreq = 100;
-% t = 1/SampFreq : 1/SampFreq : 4;
-% fc = 200;
-% noise = -6:2:14;
-% 
-% U = 1/4 + (1/2 - 1/4) * rand(1000, 1);
-% s = size(noise);
-% %CW
-% for i=1:1000
-%     Sig = cos(2*pi*fc*U(i)*t);
-%     p1 = randperm(s(2), 1);
-%     p2 = randperm(s(2), 1);
-%     Sig1 = awgn(Sig, p1);
-%     Sig2 = awgn(Sig, p2);
-%     [Ts1, tfr1]=MSST_Y(Sig1',30,10);
-%     [Ts2, tfr2]=MSST_Y(Sig2',30,10);
-%     h = figure;
-%     set(h,'visible','off')
-%     imagesc(abs(Ts1))
-%     set(gca,'XTick',[]) % Remove the ticks in the x axis!   
-%     set(gca,'YTick',[]) % Remove the ticks in the y axis
-%     set(gca,'Position',[0 0 1 1]) % Make the axes occupy the hole figure
-%     saveas(gcf,"./material/t1/" + num2str(i, '%04d'),"png")
-%     h = figure;
-%     set(h,'visible','off')
-%     imagesc(abs(Ts2))
-%     set(gca,'XTick',[]) % Remove the ticks in the x axis!   
-%     set(gca,'YTick',[]) % Remove the ticks in the y axis
-%     set(gca,'Position',[0 0 1 1]) % Make the axes occupy the hole figure
-%     saveas(gcf,"./material/t2/" + num2str(i, '%04d'),"png")
-% end
+SampFreq = 100;
+t = 1/SampFreq : 1/SampFreq : 4;  % 一个信号点长400
+fc = 200;  % 基础载波频率，咋感觉不满足采样定理呢?看下面具体U的处理，可以理解为解调的处理。为啥不直接写呢！
+noise = -6:2:14;  % 这应该就是信噪比
+
+U = 1/4 + (1/2 - 1/4) * rand(1000, 1);  % 对于下面要生成1000个CW脉冲 随机载波
+s = size(noise);
+%CW
+for i=1:1000
+    Sig = cos(2*pi*fc*U(i)*t);
+    p1 = randperm(s(2), 1);  % 随机白噪声加噪，写得这么复杂
+    p2 = randperm(s(2), 1);
+    Sig1 = awgn(Sig, p1);
+    Sig2 = awgn(Sig, p2);
+    [Ts1, tfr1]=MSST_Y(Sig1',30,10);
+    [Ts2, tfr2]=MSST_Y(Sig2',30,10);
+    h = figure;
+    set(h,'visible','off')
+    imagesc(abs(Ts1))
+    set(gca,'XTick',[]) % Remove the ticks in the x axis!   
+    set(gca,'YTick',[]) % Remove the ticks in the y axis
+    set(gca,'Position',[0 0 1 1]) % Make the axes occupy the hole figure
+    saveas(gcf,"./material/t1/" + num2str(i, '%04d'),"png")
+    h = figure;
+    set(h,'visible','off')
+    imagesc(abs(Ts2))
+    set(gca,'XTick',[]) % Remove the ticks in the x axis!   
+    set(gca,'YTick',[]) % Remove the ticks in the y axis
+    set(gca,'Position',[0 0 1 1]) % Make the axes occupy the hole figure
+    saveas(gcf,"./material/t2/" + num2str(i, '%04d'),"png")
+end
 
 SampFreq = 100;
 t = 1/SampFreq : 1/SampFreq : 4;

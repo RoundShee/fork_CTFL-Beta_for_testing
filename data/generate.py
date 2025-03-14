@@ -1,9 +1,10 @@
 """
-本文档计划将MATLAB实现的内容迁移到这里，并做修改
+本文档重新实现数据生成部分
 """
 
 import numpy as np
 import os
+from signal_generate_roundshee import gen_one_fre_sig, gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk
 from scipy.io import savemat, loadmat
 
 # 全局采样频率Fs
@@ -27,11 +28,12 @@ def signal_raw_generate():
         os.makedirs(r2_dir)
 
     # CW 载频45MHz 变化范围:1/4到1/2
-    for i in range(1000):
+    for i in range(1000):  # should I keep them one by one ?
         fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
-        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))
-        sig1 = awgn(sig, np.random.choice(snr_list))
-        sig2 = awgn(sig, np.random.choice(snr_list))
+        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))  # raw signal
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)  # get two diff snr
+        sig1 = awgn(sig, snr_1)
+        sig2 = awgn(sig, snr_2)
         file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
         file_path1 = os.path.join(r1_dir, file_name)
         file_path2 = os.path.join(r2_dir, file_name)
@@ -40,11 +42,12 @@ def signal_raw_generate():
 
     # LFW
     for i in range(1000, 2000):
-        chirp = 1
-        fc = 45e6 * np.random.uniform(0.25, 0.5)
-        sig = np.cos(2 * np.pi * fc * t - np.pi * chirp * t ** 2 + np.random.uniform(0, 2 * np.pi))
-        sig1 = awgn(sig, np.random.choice(snr_list))
-        sig2 = awgn(sig, np.random.choice(snr_list))
+        fc = np.random.uniform(Fs / 10, Fs / 8)
+        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400*Ts)  # chirp完它频率不超出-直接抄radar9
+        sig = gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400*Ts)
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)  # get two diff snr
+        sig1 = awgn(sig, snr_1)
+        sig2 = awgn(sig, snr_2)
         file_name = '{:04d}.npy'.format(i)
         file_path1 = os.path.join(r1_dir, file_name)
         file_path2 = os.path.join(r2_dir, file_name)
@@ -53,7 +56,16 @@ def signal_raw_generate():
 
     # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
     for i in range(2000, 3000):
-        pass
+        fc = np.random.uniform(Fs / 6, Fs / 5)
+        sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400*Ts, code_speed=2e6)
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)  # get two diff snr
+        sig1 = awgn(sig, snr_1)
+        sig2 = awgn(sig, snr_2)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(r1_dir, file_name)
+        file_path2 = os.path.join(r2_dir, file_name)
+        np.save(file_path1, sig1)
+        np.save(file_path2, sig2)
 
     return t
 

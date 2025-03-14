@@ -13,24 +13,29 @@
 看到传参进入，坏了，不会作者是在服务器上运行的？我的笔记本能否带的动？应该不能，看论文知参数量不大。找模型定义看看！  
 
 ### model.py
-映入眼帘的是仨模型，与我预判俩不一致，先看看都是干什么的。
-
-## 累了
-2025/03/07
-看完了相关论文，看了部分代码。今日工作量到此。还有要紧事。此仓库不应该公开。
-晚上，挂机生成数据时出现问题。MATLAB的内存管理很烂。
-从0生成到1776时报错，内容记录如下
+映入眼帘的是仨模型，与我预判俩不一致，先看看都是干什么的。  
+#### D
+D模型在计算传入的p,z的方向相似性，是个损失函数对应原文公式(13).且仅更新p所在的网络.  
+#### Model
+使用ResNet50取出最后一层FC作为backbone,定义投影头根据参数设置隐藏层大小及输出大小,从特征提取到投影输出  
+其中还定义了prediction  
+最为精彩的是此模型前向传播的定义,第一次感受到深度学习模型定义的灵活性.  
+### /radar/generate.m
+这里问题似乎很多,原论文使用的是硬件模拟的方式,我怀疑这里有问题.  
+首先不满足采样定理,且载波频率定义复杂,最终也不对.  
+其次是代码意图使用几组随机固定的SNR,但代码实际上几乎与定义的noise无关.  
+要不自己写吧.这里放一下原文:
+```raw paper - Experiments and results discussion
+The proposed method is used to classify the measured signals. The
+universal software radio peripherals(USRPs) are used to measure the
+signals from 6 transmitters. The modulations are CW, LFM, NLFM,
+2FSK, BPSK, and LFM/NLFM. For each signal source, 1200 signals are
+received and processed. For the MLP, the predictor, and the downstream 
+classifier, there is 1 input layer, 1 hidden layer and 1 output
+layer. For the projector, there is 1 input layer, 2 hidden layer, and
+1 output layer. There are BN layer and ReLU after each layer except
+the output layer. For the contrastive learning and the downstream
+classifier, the learning rates are 0.01 and 0.001, respectively.
 ```
->> generate
-错误使用 print
-生成输出时出现问题: Java 内存不足，无法创建输出。请在 MATLAB 预设项中增加“Java 堆大小”设置。
+自己重写了CW用python实现部分,发现问题,30长的窗10次迭代,输出200*400尺寸大小,但MATLAB用png存储却成了875*656  
 
-出错 saveas (第 181 行)
-        print( h, name, ['-d' dev{i}] )
-
-出错 generate (第 61 行)
-    saveas(gcf,"./material/t2/" + num2str(i, '%04d'),"png")
- 
->> 
-```
-之后再优化吧。

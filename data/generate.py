@@ -1,0 +1,68 @@
+"""
+本文档计划将MATLAB实现的内容迁移到这里，并做修改
+"""
+
+import numpy as np
+import os
+from scipy.io import savemat, loadmat
+
+# 全局采样频率Fs
+Fs = 100e6  # 采样频率Fs=100MHz   故最大可分析载频为50MHz
+Ts = 1 / Fs  # 两点实际间距-秒 0.01us=0.01e-6
+
+def signal_raw_generate():
+    """
+    生成原始数据,不做处理
+    :return:
+    """
+    t = np.arange(0, 400*Ts, Ts)  # 脉冲宽度固定,400个采样点
+    snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
+
+    save_dir = './raw/'  # 定义保存路径
+    r1_dir = os.path.join(save_dir, 'r1')
+    r2_dir = os.path.join(save_dir, 'r2')
+    if not os.path.exists(r1_dir):
+        os.makedirs(r1_dir)
+    if not os.path.exists(r2_dir):
+        os.makedirs(r2_dir)
+
+    # CW 载频45MHz 变化范围:1/4到1/2
+    for i in range(1000):
+        fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
+        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))
+        sig1 = awgn(sig, np.random.choice(snr_list))
+        sig2 = awgn(sig, np.random.choice(snr_list))
+        file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
+        file_path1 = os.path.join(r1_dir, file_name)
+        file_path2 = os.path.join(r2_dir, file_name)
+        np.save(file_path1, sig1)  # 保存数据
+        np.save(file_path2, sig2)  # 保存数据
+    return t
+
+
+def awgn(Sig, p1):
+    """
+    给信号 Sig 添加指定信噪比 p1（dB）的高斯白噪声-用AI生成的
+    :param Sig: 原始信号
+    :param p1: 信噪比（dB）
+    :return: 加噪后的信号
+    """
+    # 计算信号的功率
+    signal_power = np.mean(np.abs(Sig) ** 2)
+    # 将信噪比从 dB 转换为线性比例
+    snr_linear = 10 ** (p1 / 10)
+    # 计算噪声的功率
+    noise_power = signal_power / snr_linear
+    # 计算噪声的标准差
+    noise_std = np.sqrt(noise_power)
+    # 生成高斯白噪声
+    noise = np.random.normal(0, noise_std, Sig.shape)
+    # 将噪声添加到信号上
+    Sig1 = Sig + noise
+    return Sig1
+
+
+# t = signal_raw_generate()
+# loaded_arr = np.load('raw/r1/0000.npy')
+# print(loaded_arr.shape)
+

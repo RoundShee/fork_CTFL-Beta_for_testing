@@ -37,6 +37,24 @@ def signal_raw_generate():
         file_path2 = os.path.join(r2_dir, file_name)
         np.save(file_path1, sig1)  # 保存数据
         np.save(file_path2, sig2)  # 保存数据
+
+    # LFW
+    for i in range(1000, 2000):
+        chirp = 1
+        fc = 45e6 * np.random.uniform(0.25, 0.5)
+        sig = np.cos(2 * np.pi * fc * t - np.pi * chirp * t ** 2 + np.random.uniform(0, 2 * np.pi))
+        sig1 = awgn(sig, np.random.choice(snr_list))
+        sig2 = awgn(sig, np.random.choice(snr_list))
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(r1_dir, file_name)
+        file_path2 = os.path.join(r2_dir, file_name)
+        np.save(file_path1, sig1)
+        np.save(file_path2, sig2)
+
+    # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
+    for i in range(2000, 3000):
+        pass
+
     return t
 
 

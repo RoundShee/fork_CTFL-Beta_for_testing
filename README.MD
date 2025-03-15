@@ -38,4 +38,11 @@ the output layer. For the contrastive learning and the downstream
 classifier, the learning rates are 0.01 and 0.001, respectively.
 ```
 自己重写了CW用python实现部分,发现问题,30长的窗10次迭代,输出200*400尺寸大小,但MATLAB用png存储却成了875*656  
+其中NLFM部分,不太好复用我已有代码现进行合理的推导:  
+```MATLAB
+Sig = sin(2*pi*fc*U1(i-4000)*t - pi*U2(i-4000)*k0*sin(1.5*t));  
+```
+对上式中的相位进行求导有:  $2\pi f_c U_1 - 1.5\pi U_2 \cos(1.5t)$  
+故在一个脉冲之间要明显的看到频率的起伏需要参数1.5修改为1e6的数量级  
+
 

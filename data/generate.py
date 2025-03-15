@@ -11,6 +11,7 @@ from scipy.io import savemat, loadmat
 Fs = 100e6  # 采样频率Fs=100MHz   故最大可分析载频为50MHz
 Ts = 1 / Fs  # 两点实际间距-秒 0.01us=0.01e-6
 
+
 def signal_raw_generate():
     """
     生成原始数据,不做处理
@@ -58,7 +59,50 @@ def signal_raw_generate():
     for i in range(2000, 3000):
         fc = np.random.uniform(Fs / 6, Fs / 5)
         sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400*Ts, code_speed=2e6)
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)  # get two diff snr
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
+        sig1 = awgn(sig, snr_1)
+        sig2 = awgn(sig, snr_2)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(r1_dir, file_name)
+        file_path2 = os.path.join(r2_dir, file_name)
+        np.save(file_path1, sig1)
+        np.save(file_path2, sig2)
+
+    # 2FSK
+    for i in range(3000, 4000):
+        fc = np.random.uniform(25e6, 30e6)
+        fc_delta = np.random.uniform(5e6, 10e6)
+        sig = gen_one_2fsk(fs=Fs, f_c=fc, f_delta=fc_delta, pulse_width=400*Ts, code_speed=2e6)
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
+        sig1 = awgn(sig, snr_1)
+        sig2 = awgn(sig, snr_2)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(r1_dir, file_name)
+        file_path2 = os.path.join(r2_dir, file_name)
+        np.save(file_path1, sig1)
+        np.save(file_path2, sig2)
+
+    # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
+    for i in range(4000, 5000):
+        fc = np.random.uniform(25e6, 30e6)
+        sig = np.cos(2 * np.pi * fc * t - 1e-6*2 * np.pi*np.random.uniform(-5, 5)*np.cos(1e6*t) + np.random.uniform(0, 2 * np.pi))
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
+        sig1 = awgn(sig, snr_1)
+        sig2 = awgn(sig, snr_2)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(r1_dir, file_name)
+        file_path2 = os.path.join(r2_dir, file_name)
+        np.save(file_path1, sig1)
+        np.save(file_path2, sig2)
+
+    # LFM/NLFM
+    for i in range(5000, 6000):
+        fc = np.random.uniform(25e6, 30e6)
+        sig = np.cos(2 * np.pi * fc * t - 1e-6*2 * np.pi*np.random.uniform(-5, 5)*np.cos(1e6*t) + np.random.uniform(0, 2 * np.pi))
+        fc = np.random.uniform(Fs / 10, Fs / 8)
+        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
+        sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
+        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
         sig1 = awgn(sig, snr_1)
         sig2 = awgn(sig, snr_2)
         file_name = '{:04d}.npy'.format(i)
@@ -70,15 +114,15 @@ def signal_raw_generate():
     return t
 
 
-def awgn(Sig, p1):
+def awgn(sig, p1):
     """
     给信号 Sig 添加指定信噪比 p1（dB）的高斯白噪声-用AI生成的
-    :param Sig: 原始信号
+    :param sig: 原始信号
     :param p1: 信噪比（dB）
     :return: 加噪后的信号
     """
     # 计算信号的功率
-    signal_power = np.mean(np.abs(Sig) ** 2)
+    signal_power = np.mean(np.abs(sig) ** 2)
     # 将信噪比从 dB 转换为线性比例
     snr_linear = 10 ** (p1 / 10)
     # 计算噪声的功率
@@ -86,10 +130,10 @@ def awgn(Sig, p1):
     # 计算噪声的标准差
     noise_std = np.sqrt(noise_power)
     # 生成高斯白噪声
-    noise = np.random.normal(0, noise_std, Sig.shape)
+    noise = np.random.normal(0, noise_std, sig.shape)
     # 将噪声添加到信号上
-    Sig1 = Sig + noise
-    return Sig1
+    sig1 = sig + noise
+    return sig1
 
 
 # t = signal_raw_generate()

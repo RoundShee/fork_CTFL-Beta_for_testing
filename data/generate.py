@@ -88,7 +88,7 @@ def signal_raw_generate():
     # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
     for i in range(4000, 5000):
         fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 1e-6*2 * np.pi*np.random.uniform(-5, 5)*np.cos(1e6*t) + np.random.uniform(0, 2 * np.pi))
+        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
         snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
         sig1 = awgn(sig, snr_1)
         sig2 = awgn(sig, snr_2)
@@ -101,7 +101,7 @@ def signal_raw_generate():
     # LFM/NLFM
     for i in range(5000, 6000):
         fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 1e-6*2 * np.pi*np.random.uniform(-5, 5)*np.cos(1e6*t) + np.random.uniform(0, 2 * np.pi))
+        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
         fc = np.random.uniform(Fs / 10, Fs / 8)
         chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
         sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
@@ -147,7 +147,7 @@ def awgn(sig, p1):
 # 生成初步复现测试模型的时频图集
 def gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_num=10):
     os.makedirs(out_path, exist_ok=True)
-    npy_files = glob.glob(os.path.join(raw_path, '*.npy'))
+    npy_files = glob.glob(os.path.join(raw_path, '[45]*.npy'))
     for file_path in npy_files:
         sig_raw = np.load(file_path)
         ts, _ = MSST_Y(sig_raw, hlength=win_len, num=iter_num)
@@ -161,4 +161,5 @@ def gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_nu
         print(file_path+' OK')
 
 
-gen_TFIs()
+gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1')
+gen_TFIs(out_path='./TFIs30_10/r2', raw_path='./raw/r2')

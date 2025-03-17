@@ -48,4 +48,8 @@ Sig = sin(2*pi*fc*U1(i-4000)*t - pi*U2(i-4000)*k0*sin(1.5*t));
 我认为我需要给他改一改,写的真拉.这是在防止我看懂吗?  
 这应该是个大工作量了, 暂时计划放弃了.时间不够  
 
+额,我竟然找到了MSST_Y作者的文件,[MATLAB_Exchange](https://ww2.mathworks.cn/matlabcentral/fileexchange/68571-multisynchrosqueezing-transform)  
+那这是谁的问题??  
+不用多说,我还是知识浅薄了  
+用DeepSeek生成一个吧  
 

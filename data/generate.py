@@ -4,8 +4,11 @@
 
 import numpy as np
 import os
-from signal_generate_roundshee import gen_one_fre_sig, gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk
+import glob
+from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk
 from scipy.io import savemat, loadmat
+from copy_MSST import MSST_Y, SST, save_matlab_style_image
+
 
 # 全局采样频率Fs
 Fs = 100e6  # 采样频率Fs=100MHz   故最大可分析载频为50MHz
@@ -140,3 +143,22 @@ def awgn(sig, p1):
 # loaded_arr = np.load('raw/r1/0000.npy')
 # print(loaded_arr.shape)
 
+
+# 生成初步复现测试模型的时频图集
+def gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_num=10):
+    os.makedirs(out_path, exist_ok=True)
+    npy_files = glob.glob(os.path.join(raw_path, '*.npy'))
+    for file_path in npy_files:
+        sig_raw = np.load(file_path)
+        ts, _ = MSST_Y(sig_raw, hlength=win_len, num=iter_num)
+
+        filename = os.path.basename(file_path)
+        output_name = os.path.splitext(filename)[0] + '.png'
+        output_path = os.path.join(out_path, output_name)
+
+        save_matlab_style_image(ts, output_path, target_size=(875, 656))
+
+        print(file_path+' OK')
+
+
+gen_TFIs()

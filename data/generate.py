@@ -147,7 +147,7 @@ def awgn(sig, p1):
 # 生成初步复现测试模型的时频图集
 def gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_num=10):
     os.makedirs(out_path, exist_ok=True)
-    npy_files = glob.glob(os.path.join(raw_path, '[45]*.npy'))
+    npy_files = glob.glob(os.path.join(raw_path, '*.npy'))
     for file_path in npy_files:
         sig_raw = np.load(file_path)
         ts, _ = MSST_Y(sig_raw, hlength=win_len, num=iter_num)
@@ -161,5 +161,5 @@ def gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_nu
         print(file_path+' OK')
 
 
-gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1')
-gen_TFIs(out_path='./TFIs30_10/r2', raw_path='./raw/r2')
+# gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1')
+# gen_TFIs(out_path='./TFIs30_10/r2', raw_path='./raw/r2')

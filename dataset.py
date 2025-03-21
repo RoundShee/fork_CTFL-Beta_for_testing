@@ -7,8 +7,8 @@ import os
 class MyDataset(Dataset):
     def __init__(self, path):
         
-        p_t1 = path + '\\t1'
-        p_t2 = path + '\\t2'
+        p_t1 = path + '\\r1'
+        p_t2 = path + '\\r2'
         imgs1 = []
         imgs2 = []
         fh = os.listdir(p_t1)

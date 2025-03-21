@@ -5,7 +5,7 @@
 import numpy as np
 import os
 import glob
-from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk
+from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk, get_spwvd
 from scipy.io import savemat, loadmat
 from copy_MSST import MSST_Y, SST, save_matlab_style_image
 
@@ -163,3 +163,11 @@ def gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_nu
 
 # gen_TFIs(out_path='./TFIs30_10/r1', raw_path='./raw/r1')
 # gen_TFIs(out_path='./TFIs30_10/r2', raw_path='./raw/r2')
+
+def try_spwvd():
+    sig_raw = np.load('./raw/r1/5968.npy')
+    sig_sp = get_spwvd(sig_raw, fs=Fs, window_length=128)
+    save_matlab_style_image(sig_sp, 'test.png', target_size=(875, 656))
+
+
+# try_spwvd()

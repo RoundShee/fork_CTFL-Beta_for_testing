@@ -108,14 +108,14 @@ def main(args):
     args.checkpoints = './checkpoints/checkpoint_pretrain_model.pth'  # 修改绝对路径为相对路径
     if not os.path.isdir('checkpoints'):
         os.mkdir('checkpoints')
-    log = open('log.txt', 'w+')
+    log = open('log.txt', 'a+')
     model = Model(args)
     #down_model = DownStreamModel(args)
     if args.cuda:
         model = model.cuda()    # 将模型移到默认的CUDA,这么写我还没见过
         #down_model = down_model.cuda()
     
-    data = MyDataset("./material")
+    data = MyDataset("./data/TFIs30_10")
     trainloader = DataLoader(data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
 
     if args.pretrain:
@@ -123,7 +123,8 @@ def main(args):
         log.flush()
         optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=800)  # 学习率调度器,针对优化器进行修改,动态调整学习率
-
+        if args.checkpoints:
+            pass
         for epoch in range(1, args.epochs + 1):
             train_loss = pre_train(epoch, trainloader, model, optimizer, args, log)
             if epoch % args.print_intervals == 0:

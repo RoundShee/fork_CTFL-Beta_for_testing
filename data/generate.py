@@ -9,7 +9,7 @@ from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2
 from scipy.io import savemat, loadmat
 from copy_MSST import MSST_Y, SST, save_matlab_style_image
 from concurrent.futures import ProcessPoolExecutor  # 多进程处理
-from functools import partial
+from functools import partial  # 固定参数传入
 
 # 全局采样频率Fs
 Fs = 100e6  # 采样频率Fs=100MHz   故最大可分析载频为50MHz
@@ -299,4 +299,5 @@ def gen_TFIs_with_CPUs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=3
 
 
 if __name__ == '__main__':  # md,多进程还怪麻烦的
-    gen_TFIs_with_CPUs(out_path='./TFIs30_10/down_train', raw_path='./raw/down_train')
+    pass
+    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/down_train', raw_path='./raw/down_train')

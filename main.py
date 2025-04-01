@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
-from dataset import MyDataset
+from dataset import MyDataset,DownDataset
 
 from config import load_args
 from model import Model, DownStreamModel
@@ -137,8 +137,13 @@ def main(args):
         down_model = DownStreamModel(args)  # 下采样模型,直接包含上面特征提取网络,注意args传入checkpoint
         if args.cuda:
             down_model = down_model.cuda()
-        # 现在缺训练集,测试集:其实可以把之前的数据进行重新划分集合,那么需要重写dataloader??
-        # train_eval_down_task(down_model=down_model, down_train_loader=, down_test_loader=, args=args)
+        # 训练集:又生成了一部分没有加噪的数据作为训练集, 评估集就用r1
+        train_data = DownDataset('./data/TFIs30_10/down_train')
+        train_loader = DataLoader(train_data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
+        test_data = DownDataset('./data/TFIs30_10/r1')
+        test_loader = DataLoader(test_data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
+        train_eval_down_task(down_model=down_model, down_train_loader=train_loader, down_test_loader=test_loader, args=args)
+
 
 
 

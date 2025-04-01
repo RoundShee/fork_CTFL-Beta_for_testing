@@ -16,18 +16,24 @@ epochs = []  # 目前看来,这几句似乎也没用
 acc_train = []
 acc_test = []
 
-def save_checkpoint(model, optimizer, args, epoch):
+
+def save_checkpoint(model, optimizer, args, epoch, down_model=False):
     print('\nModel Saving...')
     if args.device_num > 1:  # 这估计不是我能玩上的,下面是多GPU用容器封装使用的保存参数方法
         model_state_dict = model.module.state_dict()
     else:
         model_state_dict = model.state_dict()
-
-    torch.save({
-        'model_state_dict': model_state_dict,
-        'global_epoch': epoch,
-        'optimizer_state_dict': optimizer.state_dict(),
-    }, os.path.join('checkpoints', 'epoch'+str(epoch)+'_checkpoint_pretrain_model_bs128.pth'))
+    if not down_model:
+        torch.save({
+            'model_state_dict': model_state_dict,
+            'global_epoch': epoch,
+            'optimizer_state_dict': optimizer.state_dict(),
+        }, os.path.join('checkpoints', 'epoch'+str(epoch)+'_checkpoint_pretrain_model_bs128.pth'))
+    else:
+        torch.save({
+            'model_state_dict': model_state_dict,
+            'global_epoch': epoch,
+        }, os.path.join('checkpoints', 'epoch' + str(epoch) + '_down_model.pth'))
 
 
 def pre_train(epoch, train_loader, model, optimizer, args, f):
@@ -93,7 +99,7 @@ def _eval(epoch, test_loader, model, criterion, args):
         print('[Down Task Test Epoch: {0:4d}], loss: {1:.3f}, acc: {2:.3f}'.format(epoch, losses / step, acc / total * 100.))
 
 
-def train_eval_down_task(down_model, down_train_loader, down_test_loader, args):
+def train_eval_down_task(down_model, down_train_loader, down_test_loader, args, log):
     global epochs  # 这里用到了全局变量,不是和特征提取器一致了
     down_optimizer = optim.SGD(down_model.parameters(), lr=args.down_lr, weight_decay=args.weight_decay, momentum=args.momentum)
     down_criterion = nn.CrossEntropyLoss()  # 下采样的交叉熵损失函数
@@ -103,6 +109,10 @@ def train_eval_down_task(down_model, down_train_loader, down_test_loader, args):
         _train(epoch, down_train_loader, down_model, down_optimizer, down_criterion, args)
         _eval(epoch, down_test_loader, down_model, down_criterion, args)
         down_lr_scheduler.step()
+        print('Cur lr: {0:.5f}'.format(down_lr_scheduler.get_last_lr()[0]), file = log)  # 记录当前学习率
+        log.flush()
+        if epoch % args.print_intervals == 0:
+            save_checkpoint(model=down_model, args=args, epoch=epoch, down_model=True)
 
 
 def main(args):
@@ -142,9 +152,8 @@ def main(args):
         train_loader = DataLoader(train_data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
         test_data = DownDataset('./data/TFIs30_10/r1')
         test_loader = DataLoader(test_data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
-        train_eval_down_task(down_model=down_model, down_train_loader=train_loader, down_test_loader=test_loader, args=args)
-
-
+        train_eval_down_task(down_model=down_model, down_train_loader=train_loader, down_test_loader=test_loader,
+                             args=args, log=log)
 
 
 if __name__ == '__main__':

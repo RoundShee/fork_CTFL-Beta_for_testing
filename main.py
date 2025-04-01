@@ -9,9 +9,10 @@ from config import load_args
 from model import Model, DownStreamModel
 
 import os
+from datetime import datetime
 import matplotlib.pyplot as plt
 
-epochs = []
+epochs = []  # 目前看来,这几句似乎也没用
 acc_train = []
 acc_test = []
 
@@ -51,7 +52,7 @@ def pre_train(epoch, train_loader, model, optimizer, args, f):
 
 
 def _train(epoch, train_loader, model, optimizer, criterion, args):
-    model.train()  # 这里模型如果加载的下采样器-孪生网络  说明还需要重新定制经过特征提取后的带标签的数据集
+    model.train()  # 对应下采样网络输出层训练模式
     losses, acc, step, total = 0., 0., 0., 0.
     for data, target in train_loader:
         if args.cuda:
@@ -105,26 +106,23 @@ def train_eval_down_task(down_model, down_train_loader, down_test_loader, args):
 
 
 def main(args):
-    args.checkpoints = './checkpoints/checkpoint_pretrain_model.pth'  # 修改绝对路径为相对路径
+    # args.checkpoints = './checkpoints/checkpoint_pretrain_model.pth'  # 这句话没用上,传参再传
     if not os.path.isdir('checkpoints'):
         os.mkdir('checkpoints')
     log = open('log.txt', 'a+')
-    model = Model(args)
-    #down_model = DownStreamModel(args)
-    if args.cuda:
-        model = model.cuda()    # 将模型移到默认的CUDA,这么写我还没见过
-        #down_model = down_model.cuda()
-    
-    data = MyDataset("./data/TFIs30_10")
-    trainloader = DataLoader(data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
 
     if args.pretrain:
+        if args.checkpoints:
+            pass  # 这里是计划能够接续训练,现在用处不大
+        model = Model(args)  # 这里是首次训练加载模型,先这么改
+        if args.cuda:
+            model = model.cuda()
+        data = MyDataset("./data/TFIs30_10")
+        trainloader = DataLoader(data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
         print("pretrain", file = log)
         log.flush()
         optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=800)  # 学习率调度器,针对优化器进行修改,动态调整学习率
-        if args.checkpoints:
-            pass
         for epoch in range(1, args.epochs + 1):
             train_loss = pre_train(epoch, trainloader, model, optimizer, args, log)
             if epoch % args.print_intervals == 0:
@@ -132,6 +130,17 @@ def main(args):
             lr_scheduler.step()  # 更新学习率
             print('Cur lr: {0:.5f}'.format(lr_scheduler.get_last_lr()[0]), file = log)  # 记录当前学习率
             log.flush()
+    if args.train_down:
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{current_time}] train_down", file=log)
+        log.flush()
+        down_model = DownStreamModel(args)  # 下采样模型,直接包含上面特征提取网络,注意args传入checkpoint
+        if args.cuda:
+            down_model = down_model.cuda()
+        # 现在缺训练集,测试集:其实可以把之前的数据进行重新划分集合,那么需要重写dataloader??
+        # train_eval_down_task(down_model=down_model, down_train_loader=, down_test_loader=, args=args)
+
+
 
 if __name__ == '__main__':
     args = load_args()

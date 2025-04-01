@@ -2,4 +2,8 @@
 /data/raw
 /.idea
 /data/TFIs30_10
+/radar
+/requirements.txt
+/log.txt
+/training_curves.png
 

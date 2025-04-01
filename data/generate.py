@@ -8,7 +8,8 @@ import glob
 from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk, get_spwvd
 from scipy.io import savemat, loadmat
 from copy_MSST import MSST_Y, SST, save_matlab_style_image
-
+from concurrent.futures import ProcessPoolExecutor  # 多进程处理
+from functools import partial
 
 # 全局采样频率Fs
 Fs = 100e6  # 采样频率Fs=100MHz   故最大可分析载频为50MHz
@@ -171,3 +172,131 @@ def try_spwvd():
 
 
 # try_spwvd()
+
+
+def signal_raw_generate_for_down(noise_eval=False):
+    """
+    为下采样网络训练提供不加噪数据进行微调训练
+    或加噪数据进行评估   其余复制粘贴  应该使用多进程的-无所谓干
+    :return:1
+    """
+    t = np.arange(0, 400*Ts, Ts)  # 脉冲宽度固定,400个采样点
+    snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
+
+    if noise_eval:
+        save_dir = './raw/down_eval'
+    else:
+        save_dir = './raw/down_train'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # CW 载频45MHz 变化范围:1/4到1/2
+    for i in range(1000):
+        fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
+        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))  # raw signal
+        if noise_eval:
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
+        file_path1 = os.path.join(save_dir, file_name)
+        np.save(file_path1, sig)
+
+    # LFW
+    for i in range(1000, 2000):
+        fc = np.random.uniform(Fs / 10, Fs / 8)
+        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400*Ts)  # chirp完它频率不超出-直接抄radar9
+        sig = gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400*Ts)
+        if noise_eval:
+            snr_1 = np.random.choice(snr_list)
+            sig = awgn(sig, snr_1)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(save_dir, file_name)
+        np.save(file_path1, sig)
+
+    # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
+    for i in range(2000, 3000):
+        fc = np.random.uniform(Fs / 6, Fs / 5)
+        sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400*Ts, code_speed=2e6)
+        if noise_eval:
+            snr_1 = np.random.choice(snr_list)
+            sig = awgn(sig, snr_1)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(save_dir, file_name)
+        np.save(file_path1, sig)
+
+    # 2FSK
+    for i in range(3000, 4000):
+        fc = np.random.uniform(25e6, 30e6)
+        fc_delta = np.random.uniform(5e6, 10e6)
+        sig = gen_one_2fsk(fs=Fs, f_c=fc, f_delta=fc_delta, pulse_width=400*Ts, code_speed=2e6)
+        if noise_eval:
+            snr_1 = np.random.choice(snr_list)
+            sig = awgn(sig, snr_1)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(save_dir, file_name)
+        np.save(file_path1, sig)
+
+    # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
+    for i in range(4000, 5000):
+        fc = np.random.uniform(25e6, 30e6)
+        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
+        if noise_eval:
+            snr_1 = np.random.choice(snr_list)
+            sig = awgn(sig, snr_1)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(save_dir, file_name)
+        np.save(file_path1, sig)
+
+    # LFM/NLFM
+    for i in range(5000, 6000):
+        fc = np.random.uniform(25e6, 30e6)
+        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
+        fc = np.random.uniform(Fs / 10, Fs / 8)
+        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
+        sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
+        if noise_eval:
+            snr_1 = np.random.choice(snr_list)
+            sig = awgn(sig, snr_1)
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(save_dir, file_name)
+        np.save(file_path1, sig)
+
+    return 1
+
+# signal_raw_generate_for_down()
+
+
+def process_file(file_path, out_path, win_len, iter_num):
+    """处理单个文件的独立函数-复用gen_TFIs重写成多进行处理"""
+    try:
+        sig_raw = np.load(file_path)
+        ts, _ = MSST_Y(sig_raw, hlength=win_len, num=iter_num)
+
+        filename = os.path.basename(file_path)
+        output_name = os.path.splitext(filename)[0] + '.png'
+        output_path = os.path.join(out_path, output_name)
+
+        save_matlab_style_image(ts, output_path, target_size=(875, 656))
+        print(f"{file_path} OK")
+        return True
+    except Exception as e:
+        print(f"{file_path} Failed: {str(e)}")
+        return False
+
+
+def gen_TFIs_with_CPUs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=30, iter_num=10):
+    """并行化主函数"""
+    os.makedirs(out_path, exist_ok=True)
+    npy_files = glob.glob(os.path.join(raw_path, '*.npy'))
+    # 固定参数传递给子进程
+    worker = partial(process_file, out_path=out_path, win_len=win_len, iter_num=iter_num)
+    # 使用多进程池加速
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+        results = executor.map(worker, npy_files)
+    # 统计成功/失败数量
+    success = sum(results)
+    print(f"Processed {len(npy_files)} files, {success} succeeded.")
+
+
+if __name__ == '__main__':  # md,多进程还怪麻烦的
+    gen_TFIs_with_CPUs(out_path='./TFIs30_10/down_train', raw_path='./raw/down_train')

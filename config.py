@@ -16,6 +16,7 @@ def load_args():
     parser.add_argument('--weight_decay', type=float, default=1e-4)
     parser.add_argument('--checkpoints', type=str, default=None)
     parser.add_argument('--pretrain', action='store_true', default=False)
+    parser.add_argument('--train_down', action='store_true', default=False)
     parser.add_argument('--device_num', type=int, default=1)
     parser.add_argument('--print_intervals', type=int, default=20)
 

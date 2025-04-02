@@ -87,7 +87,7 @@ class DownStreamModel(nn.Module):
             param.requires_grad = False
 
         self.out = nn.Sequential(
-            nn.Flatten(),  # 展平为 [batch_size, 2048] 原作者是故意的还是版本问题?
+            # nn.Flatten(),  # 展平为 [batch_size, 2048] 原作者是故意的还是版本问题?
             nn.Linear(args.proj_out, hidden),
             nn.BatchNorm1d(hidden),
             nn.ReLU(),
@@ -95,7 +95,8 @@ class DownStreamModel(nn.Module):
         )
 
     def forward(self, x):
-        out = self.net_backbone(x)
-        # print(out.shape)  # torch.Size([16, 2048, 1, 1])
+        out = self.net_backbone(x)  # torch.Size([16, 2048, 1, 1])
+        out = torch.flatten(out, 1)
+        out = self.net_projection(out)
         out = self.out(out)
         return out

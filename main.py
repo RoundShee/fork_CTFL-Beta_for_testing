@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
-from dataset import MyDataset,DownDataset
+from dataset import MyDataset, DownDataset
 
 from config import load_args
 from model import Model, DownStreamModel
@@ -57,7 +57,7 @@ def pre_train(epoch, train_loader, model, optimizer, args, f):
     return losses / step
 
 
-def _train(epoch, train_loader, model, optimizer, criterion, args):
+def _train(epoch, train_loader, model, optimizer, criterion, args, log):
     model.train()  # 对应下采样网络输出层训练模式
     losses, acc, step, total = 0., 0., 0., 0.
     for data, target in train_loader:
@@ -77,10 +77,11 @@ def _train(epoch, train_loader, model, optimizer, criterion, args):
 
         step += 1
         total += target.size(0)
+    print('[Down Task Train Epoch: {0:4d}], loss: {1:.3f}, acc: {2:.3f}'.format(epoch, losses / step, acc / total * 100.), file=log)
     print('[Down Task Train Epoch: {0:4d}], loss: {1:.3f}, acc: {2:.3f}'.format(epoch, losses / step, acc / total * 100.))
+    log.flush()
 
-
-def _eval(epoch, test_loader, model, criterion, args):
+def _eval(epoch, test_loader, model, criterion, args,log):
     model.eval()  # 评估模式-应该是下采样器要训练完以后在测试集上进行实时的评估
     losses, acc, step, total = 0., 0., 0., 0.
     with torch.no_grad():
@@ -96,7 +97,9 @@ def _eval(epoch, test_loader, model, criterion, args):
 
             step += 1
             total += target.size(0)
+        print('[Down Task Test Epoch: {0:4d}], loss: {1:.3f}, acc: {2:.3f}'.format(epoch, losses / step, acc / total * 100.),file=log)
         print('[Down Task Test Epoch: {0:4d}], loss: {1:.3f}, acc: {2:.3f}'.format(epoch, losses / step, acc / total * 100.))
+        log.flush()
 
 
 def train_eval_down_task(down_model, down_train_loader, down_test_loader, args, log):
@@ -106,13 +109,13 @@ def train_eval_down_task(down_model, down_train_loader, down_test_loader, args, 
     down_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(down_optimizer, T_max=args.down_epochs)
     for epoch in range(1, args.down_epochs + 1):
         epochs.append(epoch)
-        _train(epoch, down_train_loader, down_model, down_optimizer, down_criterion, args)
-        _eval(epoch, down_test_loader, down_model, down_criterion, args)
+        _train(epoch, down_train_loader, down_model, down_optimizer, down_criterion, args, log)
+        _eval(epoch, down_test_loader, down_model, down_criterion, args, log)
         down_lr_scheduler.step()
         print('Cur lr: {0:.5f}'.format(down_lr_scheduler.get_last_lr()[0]), file = log)  # 记录当前学习率
         log.flush()
         if epoch % args.print_intervals == 0:
-            save_checkpoint(model=down_model, args=args, epoch=epoch, down_model=True)
+            save_checkpoint(model=down_model, args=args, epoch=epoch, down_model=True, optimizer=None)
 
 
 def main(args):

@@ -122,7 +122,7 @@ def main(args):
     # args.checkpoints = './checkpoints/checkpoint_pretrain_model.pth'  # 这句话没用上,传参再传
     if not os.path.isdir('checkpoints'):
         os.mkdir('checkpoints')
-    log = open('log.txt', 'a+')
+    log = open('shee_process/log.txt', 'a+')
 
     if args.pretrain:
         if args.checkpoints:

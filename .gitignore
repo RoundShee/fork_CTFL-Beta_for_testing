@@ -4,7 +4,7 @@
 /data/TFIs30_10
 /radar
 /requirements.txt
-/log.txt
-/log_pretrain_bak.txt
-/training_curves.png
+/shee_process/log.txt
+/shee_process/log_pretrain_bak.txt
+/shee_process/training_curves.png
 

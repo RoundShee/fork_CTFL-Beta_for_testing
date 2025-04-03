@@ -298,6 +298,141 @@ def gen_TFIs_with_CPUs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=3
     print(f"Processed {len(npy_files)} files, {success} succeeded.")
 
 
+# 我又需要新的原始数据了,似乎我需要写一个较为完善的signal_raw_generate
+# 它应该具备指定输出目录, 不加噪,随机加噪,加指定噪,哎?指定噪,要求原始数据一样吗?没必要
+def signal_raw_generate_final(out_path='./raw/final', num=1000, noise='r'):
+    """
+    :param num: 不要超过1000否则覆盖
+    :param out_path:
+    :param noise: r:随机加噪, n:不加噪, num_int:指定信噪比的噪声
+    :return:
+    """
+    t = np.arange(0, 400 * Ts, Ts)  # 脉冲宽度固定,400个采样点
+    snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
+    os.makedirs(out_path, exist_ok=True)
+    # CW 载频45MHz 变化范围:1/4到1/2
+    for i in range(num):
+        fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
+        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))  # raw signal
+        if noise == 'r':
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        elif noise == 'n':
+            # 模式2：不添加噪声
+            pass  # 直接跳过加噪步骤
+        elif isinstance(noise, (int, float)):
+            # 模式3：指定信噪比加噪
+            sig = awgn(sig, float(noise))
+        else:
+            raise ValueError("Invalid-noise-parameter.")
+        file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
+        file_path1 = os.path.join(out_path, file_name)
+        np.save(file_path1, sig)
+
+    # LFW
+    for i in range(1000, 1000+num):
+        fc = np.random.uniform(Fs / 10, Fs / 8)
+        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)  # chirp完它频率不超出-直接抄radar9
+        sig = gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
+        if noise == 'r':
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        elif noise == 'n':
+            pass
+        elif isinstance(noise, (int, float)):
+            sig = awgn(sig, float(noise))
+        else:
+            raise ValueError("Invalid-noise-parameter.")
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(out_path, file_name)
+        np.save(file_path1, sig)
+
+    # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
+    for i in range(2000, 2000+num):
+        fc = np.random.uniform(Fs / 6, Fs / 5)
+        sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400 * Ts, code_speed=2e6)
+        if noise == 'r':
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        elif noise == 'n':
+            pass
+        elif isinstance(noise, (int, float)):
+            sig = awgn(sig, float(noise))
+        else:
+            raise ValueError("Invalid-noise-parameter.")
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(out_path, file_name)
+        np.save(file_path1, sig)
+
+    # 2FSK
+    for i in range(3000, 3000+num):
+        fc = np.random.uniform(25e6, 30e6)
+        fc_delta = np.random.uniform(5e6, 10e6)
+        sig = gen_one_2fsk(fs=Fs, f_c=fc, f_delta=fc_delta, pulse_width=400 * Ts, code_speed=2e6)
+        if noise == 'r':
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        elif noise == 'n':
+            pass
+        elif isinstance(noise, (int, float)):
+            sig = awgn(sig, float(noise))
+        else:
+            raise ValueError("Invalid-noise-parameter.")
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(out_path, file_name)
+        np.save(file_path1, sig)
+
+    # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
+    for i in range(4000, 4000+num):
+        fc = np.random.uniform(25e6, 30e6)
+        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi * np.random.uniform(6, 8) * np.cos(
+            2e6 * t + np.random.uniform(0, 2 * np.pi)))
+        if noise == 'r':
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        elif noise == 'n':
+            pass
+        elif isinstance(noise, (int, float)):
+            sig = awgn(sig, float(noise))
+        else:
+            raise ValueError("Invalid-noise-parameter.")
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(out_path, file_name)
+        np.save(file_path1, sig)
+
+    # LFM/NLFM
+    for i in range(5000, 5000+num):
+        fc = np.random.uniform(25e6, 30e6)
+        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi * np.random.uniform(6, 8) * np.cos(
+            2e6 * t + np.random.uniform(0, 2 * np.pi)))
+        fc = np.random.uniform(Fs / 10, Fs / 8)
+        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
+        sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
+        if noise == 'r':
+            snr_1 = np.random.choice(snr_list)  # get two diff snr
+            sig = awgn(sig, snr_1)
+        elif noise == 'n':
+            pass
+        elif isinstance(noise, (int, float)):
+            sig = awgn(sig, float(noise))
+        else:
+            raise ValueError("Invalid-noise-parameter.")
+        file_name = '{:04d}.npy'.format(i)
+        file_path1 = os.path.join(out_path, file_name)
+        np.save(file_path1, sig)
+
+    return 1
+
+
 if __name__ == '__main__':  # md,多进程还怪麻烦的
     pass
-    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/down_train', raw_path='./raw/down_train')
+    # signal_raw_generate_final(out_path='./raw/final/n6', num=100, noise=-6)
+    # signal_raw_generate_final(out_path='./raw/final/n4', num=100, noise=-4)
+    # signal_raw_generate_final(out_path='./raw/final/n2', num=100, noise=-2)
+    # signal_raw_generate_final(out_path='./raw/final/n0', num=100, noise=0)
+    # signal_raw_generate_final(out_path='./raw/final/p2', num=100, noise=2)
+    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n6', raw_path='./raw/final/n6')
+    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n4', raw_path='./raw/final/n4')
+    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n2', raw_path='./raw/final/n2')
+    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n0', raw_path='./raw/final/n0')
+    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/p2', raw_path='./raw/final/p2')

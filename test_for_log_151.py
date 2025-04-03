@@ -53,12 +53,12 @@ def plot_training_curves(epochs, losses, lrs):
     plt.grid(True, linestyle='--', alpha=0.7)
 
     plt.tight_layout()
-    plt.savefig('training_curves_1.png', dpi=300, bbox_inches='tight')
+    plt.savefig('training_curves20250402.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 
 if __name__ == "__main__":
-    log_path = "./log_151.txt"  # 修改为你的log文件路径
+    log_path = "./log20250402.txt"  # 修改为你的log文件路径
     epochs, losses, lrs = parse_log(log_path)
 
     print(f"Parsed {len(epochs)} epochs of data")

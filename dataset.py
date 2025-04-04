@@ -9,16 +9,16 @@ import glob
 class MyDataset(Dataset):
     def __init__(self, path):
         
-        p_t1 = path + '\\r1'
-        p_t2 = path + '\\r2'
+        p_t1 = path + '/r1'
+        p_t2 = path + '/r2'
         imgs1 = []
         imgs2 = []
         fh = os.listdir(p_t1)
         for line in fh:
             # line = line.rstrip()
             words = line.split()
-            imgs1.append(p_t1 + "\\" + words[0])
-            imgs2.append(p_t2 + "\\" + words[0])
+            imgs1.append(p_t1 + "/" + words[0])
+            imgs2.append(p_t2 + "/" + words[0])
             self.imgs1 = imgs1
             self.imgs2 = imgs2
 

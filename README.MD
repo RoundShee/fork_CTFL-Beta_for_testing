@@ -88,9 +88,12 @@ ResNet:pretrained=True
 再看其论文,我需要一个新的区分各个信噪比的数据集  
 然后在这些相应的数据集上计算混淆矩阵以及准确率  
 tmd 不想干了  
-![](./shee_process/p1.png "SNR=1")  
-![](./shee_process/n4.png "SNR=-4")  
-![](./shee_process/n6.png "SNR=-6")  
+<img height="300" src="./shee_process/0403_p2.png" width="400"/>  
+SNR=2上图  
+<img height="300" src="./shee_process/0403_n4.png" width="400"/>  
+SNR=-4上图  
+<img height="300" src="./shee_process/0403_n6.png" width="400"/>  
+SNR=-6上图  
 
 ### 20250404  
 现在知道问题所在了  
@@ -101,3 +104,14 @@ md,气炸了,还真是我写错了
 信号部分可能存在线性调制,非线性和他俩都有的情况在低信噪比情况下不佳  
 后续网络的话,谨慎训练,多想  
 无所为,想的同时之前的代码直接训练看效果  辅助我的thinking  
+
+今日结果:  
+<img height="300" src="./shee_process/0404_p2.png" width="400"/>  
+SNR=2上图  
+<img height="300" src="./shee_process/0404_n4.png" width="400"/>  
+SNR=-4上图  
+<img height="300" src="./shee_process/0404_n6.png" width="400"/>  
+SNR=-6上图  
+
+似乎效果也怎么提升,分析问题,可以发现,就是无噪情况下,  
+有可能信号随机生成的时候这个码元会一致,导致和固定载波一样  

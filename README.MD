@@ -67,8 +67,20 @@ Sig = sin(2*pi*fc*U1(i-4000)*t - pi*U2(i-4000)*k0*sin(1.5*t));
 kmeans_repr是使用特征提取网络输出向量进行的聚类  
 同时: 明确了没有MLP,也没有用特征提取网络的投影层  
 ### linear_mlp.py  
-
-
+这个文档,写的乱七八糟,虽然加载了特征提取的参数,但没有送入使用.  
+送入的反而是一个未训练的ResNet50,还有,我发现,他的MLP连在了特征提取后面  
+但代码写的不对,resnet_model反而送进去了个空的  
+已经可以证明,我对论文的理解,加上自己的推测应该是正确的  
+但现在还是不敢确定,为什么下采样分类器不加原始的投影层  
+### linear_sl.py  
+这个文档似乎是mlp的修复,没有上面文档的连接错误  
+不对,还有错误,model加载的参数没用  
+其中它又引入ResNet 但是pretrained=False
+而且可以清晰明确的确定,当前我在model中更改的模型是仅仅增加了投影层  
+### linear_ssl.py  
+这个反而使用了simsiam  
+### linear_t.py
+ResNet:pretrained=True
 ## 我的修改issue
 
 ### 20250403

@@ -221,7 +221,7 @@ def gen_one_bpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
     codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
     codes = np.repeat(codes, code_fs_num)  # 生成码序列对应脉冲相位
     codes = codes[:output_len]  # 截取与脉冲长度对应
-    out_phase = 2*np.pi*carr_fre*output_time + phi_0 + np.pi*(codes*2-1)  # 相位计算
+    out_phase = 2*np.pi*carr_fre*output_time + phi_0 + np.pi*codes  # 相位计算
     out_bpsk = np.cos(out_phase)
     return out_bpsk
 

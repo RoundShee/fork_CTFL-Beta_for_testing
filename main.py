@@ -54,6 +54,7 @@ def pre_train(epoch, train_loader, model, optimizer, args, f):
         step += 1
 
     print('[Epoch: {0:4d}, loss: {1:.3f}'.format(epoch, losses / step), file = f)
+    print('[Epoch: {0:4d}, loss: {1:.3f}'.format(epoch, losses / step))
     return losses / step
 
 
@@ -142,6 +143,7 @@ def main(args):
                 save_checkpoint(model, optimizer, args, epoch)  # 检查点保存
             lr_scheduler.step()  # 更新学习率
             print('Cur lr: {0:.5f}'.format(lr_scheduler.get_last_lr()[0]), file = log)  # 记录当前学习率
+            print('Cur lr: {0:.5f}'.format(lr_scheduler.get_last_lr()[0]))
             log.flush()
     if args.train_down:
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

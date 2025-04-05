@@ -219,6 +219,10 @@ def gen_one_bpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
     code_fs_num = int(fs/code_speed)  # 一个码有几个点
     one_pulse_code_nums = int(output_len // code_fs_num + 1)  # 需要大概的码数量
     codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
+    if np.all(codes == 0):
+        codes[-1] = 1  # 将最后一个元素改为1
+    elif np.all(codes == 1):
+        codes[-1] = 0  # 将最后一个元素改为0
     codes = np.repeat(codes, code_fs_num)  # 生成码序列对应脉冲相位
     codes = codes[:output_len]  # 截取与脉冲长度对应
     out_phase = 2*np.pi*carr_fre*output_time + phi_0 + np.pi*codes  # 相位计算
@@ -272,6 +276,10 @@ def gen_one_2fsk(fs, f_c, f_delta, pulse_width, code_speed, random_phase=1):
     code_fs_num = int(fs / code_speed)  # 一个码有几个点
     one_pulse_code_nums = int(output_len // code_fs_num + 1)  # 需要大概的码数量
     codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
+    if np.all(codes == 0):
+        codes[-1] = 1  # 将最后一个元素改为1
+    elif np.all(codes == 1):
+        codes[-1] = 0  # 将最后一个元素改为0
     codes = np.repeat(codes, code_fs_num)  # 生成码序列对应脉冲相位
     codes = codes[:output_len]  # 截取与脉冲长度对应
     out_phase = 2*np.pi*(f_c+f_delta*codes)*output_time+phi_0

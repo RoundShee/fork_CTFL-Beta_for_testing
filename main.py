@@ -149,7 +149,7 @@ def main(args):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{current_time}] train_down", file=log)
         log.flush()
-        down_model = DownStreamModel(args)  # 下采样模型,直接包含上面特征提取网络,注意args传入checkpoint
+        down_model = DownStreamModel(args, n_classes=12)  # 下采样模型,直接包含上面特征提取网络,注意args传入checkpoint
         if args.cuda:
             down_model = down_model.cuda()
         # 训练集:又生成了一部分没有加噪的数据作为训练集, 评估集就用r1

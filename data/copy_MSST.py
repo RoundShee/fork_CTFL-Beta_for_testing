@@ -102,7 +102,7 @@ def save_matlab_style_image(matrix, filename, target_size=(875, 656)):
     im = ax.imshow(np.abs(matrix),
                    cmap=cmap,
                    aspect='auto',  # 关闭宽高比自动调整
-                   origin='upper',
+                   origin='lower',
                    interpolation='none',
                    norm=Normalize(vmin=np.min(np.abs(matrix)),
                                   vmax=np.max(np.abs(matrix))))

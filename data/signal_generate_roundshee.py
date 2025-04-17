@@ -199,10 +199,11 @@ def gen_one_vee_fre_sig(fs, carr_fre, v_rate, pulse_width, random_phase=1):
     return vee_fre_sig
 
 
-def gen_one_bpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
+def gen_one_bpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1, code_rand=True):
     """
     根据成电论文，生成指定参数下，模拟接收到的中频处理后的信号，处理后载波为2倍输入值。但根据论文提供的时频图以及测试参数，
     这里的bpsk为直接接收结果，不考虑2倍处理。 码信息随机生成
+    :param code_rand:
     :param fs:采样率-Hz
     :param carr_fre:载频-Hz
     :param pulse_width:脉宽-s
@@ -218,11 +219,15 @@ def gen_one_bpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
         phi_0 = 0
     code_fs_num = int(fs/code_speed)  # 一个码有几个点
     one_pulse_code_nums = int(output_len // code_fs_num + 1)  # 需要大概的码数量
-    codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
-    if np.all(codes == 0):
-        codes[-1] = 1  # 将最后一个元素改为1
-    elif np.all(codes == 1):
-        codes[-1] = 0  # 将最后一个元素改为0
+    if code_rand:  # 默认码随机
+        codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
+        if np.all(codes == 0):
+            codes[-1] = 1  # 将最后一个元素改为1
+        elif np.all(codes == 1):
+            codes[-1] = 0  # 将最后一个元素改为0
+    else:
+        base_pattern = [0, 1]
+        codes = np.resize(base_pattern, one_pulse_code_nums).astype(int)
     codes = np.repeat(codes, code_fs_num)  # 生成码序列对应脉冲相位
     codes = codes[:output_len]  # 截取与脉冲长度对应
     out_phase = 2*np.pi*carr_fre*output_time + phi_0 + np.pi*codes  # 相位计算
@@ -230,9 +235,10 @@ def gen_one_bpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
     return out_bpsk
 
 
-def gen_one_qpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
+def gen_one_qpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1, code_rand=True):
     """
     如上QPSK
+    :param code_rand:
     :param fs:采样率-Hz
     :param carr_fre:载频-Hz
     :param pulse_width:脉宽-s
@@ -248,7 +254,11 @@ def gen_one_qpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
         phi_0 = 0
     code_fs_num = int(fs/code_speed)  # 一个码有几个点
     one_pulse_code_nums = int(output_len // code_fs_num + 1)  # 需要大概的码数量
-    codes = np.random.randint(0, 4, size=one_pulse_code_nums)  # 生成随机码序列
+    if code_rand:
+        codes = np.random.randint(0, 4, size=one_pulse_code_nums)  # 生成随机码序列
+    else:
+        base_pattern = [0, 1, 2, 3]
+        codes = np.resize(base_pattern, one_pulse_code_nums).astype(int)
     codes = np.repeat(codes, code_fs_num)  # 生成码序列对应脉冲相位
     codes = codes[:output_len]  # 截取与脉冲长度对应
     out_phase = 2*np.pi*carr_fre*output_time + phi_0 + np.pi*(codes/2+0.25)  # 相位计算
@@ -256,9 +266,10 @@ def gen_one_qpsk(fs, carr_fre, pulse_width, code_speed, random_phase=1):
     return out_qpsk
 
 
-def gen_one_2fsk(fs, f_c, f_delta, pulse_width, code_speed, random_phase=1):
+def gen_one_2fsk(fs, f_c, f_delta, pulse_width, code_speed, random_phase=1, code_rand=True):
     """
     2FSK生成 频率表达式：f(t)=f_c+f_delta*code(tau)
+    :param code_rand:
     :param fs: 采样率
     :param f_c:
     :param f_delta:
@@ -275,11 +286,15 @@ def gen_one_2fsk(fs, f_c, f_delta, pulse_width, code_speed, random_phase=1):
         phi_0 = 0
     code_fs_num = int(fs / code_speed)  # 一个码有几个点
     one_pulse_code_nums = int(output_len // code_fs_num + 1)  # 需要大概的码数量
-    codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
-    if np.all(codes == 0):
-        codes[-1] = 1  # 将最后一个元素改为1
-    elif np.all(codes == 1):
-        codes[-1] = 0  # 将最后一个元素改为0
+    if code_rand:
+        codes = np.random.randint(0, 2, size=one_pulse_code_nums)  # 生成随机码序列 BPSK是randint(0,2)不含2
+        if np.all(codes == 0):
+            codes[-1] = 1  # 将最后一个元素改为1
+        elif np.all(codes == 1):
+            codes[-1] = 0  # 将最后一个元素改为0
+    else:
+        base_pattern = [0, 1]
+        codes = np.resize(base_pattern, one_pulse_code_nums).astype(int)
     codes = np.repeat(codes, code_fs_num)  # 生成码序列对应脉冲相位
     codes = codes[:output_len]  # 截取与脉冲长度对应
     out_phase = 2*np.pi*(f_c+f_delta*codes)*output_time+phi_0

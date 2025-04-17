@@ -5,7 +5,7 @@
 import numpy as np
 import os
 import glob
-from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk, get_spwvd
+from signal_generate_roundshee import gen_one_chirp_sig, gen_one_bpsk, gen_one_2fsk, get_spwvd, gen_one_qpsk, gen_one_fre_sig, gen_one_vee_fre_sig
 from scipy.io import savemat, loadmat
 from copy_MSST import MSST_Y, SST, save_matlab_style_image
 from concurrent.futures import ProcessPoolExecutor  # 多进程处理
@@ -16,15 +16,69 @@ Fs = 100e6  # 采样频率Fs=100MHz   故最大可分析载频为50MHz
 Ts = 1 / Fs  # 两点实际间距-秒 0.01us=0.01e-6
 
 
+def get_one_signal(which_one):
+    sequence = np.array([])
+    if which_one == 1:
+        f_c = np.random.uniform(Fs/6, Fs/5)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        sequence = gen_one_bpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6, code_rand=False)
+    elif which_one == 2:
+        f_c = np.random.uniform(Fs/12, Fs/10)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        sequence = gen_one_bpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6, code_rand=False)
+    elif which_one == 3:
+        f_c = np.random.uniform(Fs/12, Fs/10)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        sequence = gen_one_qpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6, code_rand=False)
+    elif which_one == 4:
+        f_c = np.random.uniform(Fs / 4, Fs / 3)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        sequence = gen_one_qpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6, code_rand=False)
+    elif which_one == 5:
+        f_c = np.random.uniform(Fs/12, Fs/10)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        f_delta = np.random.uniform(Fs/6, Fs/5) - f_c
+        sequence = gen_one_2fsk(fs=Fs, f_c=f_c, f_delta=f_delta, pulse_width=pul_wid, code_speed=1.2e6, code_rand=False)
+    elif which_one == 6:
+        f_c = np.random.uniform(Fs / 12, Fs / 10)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        f_delta = np.random.uniform(Fs / 6, Fs / 5) - f_c
+        sequence = gen_one_2fsk(fs=Fs, f_c=f_c, f_delta=f_delta, pulse_width=pul_wid, code_speed=2e6, code_rand=False)
+    elif which_one == 7:
+        f_c = np.random.uniform(Fs / 6, Fs / 5)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        sequence = gen_one_fre_sig(fs=Fs, carr_fre=f_c, pulse_width=pul_wid)
+    elif which_one == 8:
+        f_c = np.random.uniform(Fs / 12, Fs / 10)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        sequence = gen_one_fre_sig(fs=Fs, carr_fre=f_c, pulse_width=pul_wid)
+    elif which_one == 9:
+        f_c = np.random.uniform(Fs / 10, Fs / 8)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        chirp_rate = np.random.uniform(Fs / 6, Fs / 5) / pul_wid
+        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=chirp_rate, pulse_width=pul_wid)
+    elif which_one == 10:
+        f_c = np.random.uniform(Fs / 12, Fs / 10)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        chirp_rate = np.random.uniform(Fs / 12, Fs / 10) / pul_wid
+        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=chirp_rate, pulse_width=pul_wid)
+    elif which_one == 11:
+        f_c = np.random.uniform(Fs / 6, Fs / 5)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        chirp_rate = np.random.uniform(Fs / 12, Fs / 10) / pul_wid  # 比例还与脉冲宽度有关
+        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=-chirp_rate, pulse_width=pul_wid)
+    elif which_one == 12:
+        f_c = np.random.uniform(Fs / 6, Fs / 5)
+        pul_wid = np.random.uniform(4e-6, 6e-6)
+        v_rate = np.random.uniform(Fs / 20, Fs / 15) / pul_wid * 2  # 比例还与脉冲宽度有关
+        sequence = gen_one_vee_fre_sig(fs=Fs, carr_fre=f_c, v_rate=-v_rate, pulse_width=pul_wid)
+    return sequence
+
+
 def signal_raw_generate():
-    """
-    生成原始数据,不做处理
-    :return:
-    """
-    t = np.arange(0, 400*Ts, Ts)  # 脉冲宽度固定,400个采样点
     snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
 
-    save_dir = './raw/'  # 定义保存路径
+    save_dir = './raw12/'  # 定义保存路径
     r1_dir = os.path.join(save_dir, 'r1')
     r2_dir = os.path.join(save_dir, 'r2')
     if not os.path.exists(r1_dir):
@@ -32,90 +86,19 @@ def signal_raw_generate():
     if not os.path.exists(r2_dir):
         os.makedirs(r2_dir)
 
-    # CW 载频45MHz 变化范围:1/4到1/2
-    for i in range(1000):  # should I keep them one by one ?
-        fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
-        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))  # raw signal
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)  # get two diff snr
-        sig1 = awgn(sig, snr_1)
-        sig2 = awgn(sig, snr_2)
-        file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
-        file_path1 = os.path.join(r1_dir, file_name)
-        file_path2 = os.path.join(r2_dir, file_name)
-        np.save(file_path1, sig1)  # 保存数据
-        np.save(file_path2, sig2)  # 保存数据
-
-    # LFW
-    for i in range(1000, 2000):
-        fc = np.random.uniform(Fs / 10, Fs / 8)
-        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400*Ts)  # chirp完它频率不超出-直接抄radar9
-        sig = gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400*Ts)
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)  # get two diff snr
-        sig1 = awgn(sig, snr_1)
-        sig2 = awgn(sig, snr_2)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(r1_dir, file_name)
-        file_path2 = os.path.join(r2_dir, file_name)
-        np.save(file_path1, sig1)
-        np.save(file_path2, sig2)
-
-    # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
-    for i in range(2000, 3000):
-        fc = np.random.uniform(Fs / 6, Fs / 5)
-        sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400*Ts, code_speed=2e6)
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
-        sig1 = awgn(sig, snr_1)
-        sig2 = awgn(sig, snr_2)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(r1_dir, file_name)
-        file_path2 = os.path.join(r2_dir, file_name)
-        np.save(file_path1, sig1)
-        np.save(file_path2, sig2)
-
-    # 2FSK
-    for i in range(3000, 4000):
-        fc = np.random.uniform(25e6, 30e6)
-        fc_delta = np.random.uniform(5e6, 10e6)
-        sig = gen_one_2fsk(fs=Fs, f_c=fc, f_delta=fc_delta, pulse_width=400*Ts, code_speed=2e6)
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
-        sig1 = awgn(sig, snr_1)
-        sig2 = awgn(sig, snr_2)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(r1_dir, file_name)
-        file_path2 = os.path.join(r2_dir, file_name)
-        np.save(file_path1, sig1)
-        np.save(file_path2, sig2)
-
-    # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
-    for i in range(4000, 5000):
-        fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
-        sig1 = awgn(sig, snr_1)
-        sig2 = awgn(sig, snr_2)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(r1_dir, file_name)
-        file_path2 = os.path.join(r2_dir, file_name)
-        np.save(file_path1, sig1)
-        np.save(file_path2, sig2)
-
-    # LFM/NLFM
-    for i in range(5000, 6000):
-        fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
-        fc = np.random.uniform(Fs / 10, Fs / 8)
-        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
-        sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
-        snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
-        sig1 = awgn(sig, snr_1)
-        sig2 = awgn(sig, snr_2)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(r1_dir, file_name)
-        file_path2 = os.path.join(r2_dir, file_name)
-        np.save(file_path1, sig1)
-        np.save(file_path2, sig2)
-
-    return t
+    for j in range(0, 12):  # 雷达索引
+        base_i = j*1000
+        for i in range(base_i, base_i+500):  # 每种雷达只有500个
+            sig = get_one_signal(j+1)
+            snr_1, snr_2 = np.random.choice(snr_list, size=2, replace=False)
+            sig1 = awgn(sig, snr_1)
+            sig2 = awgn(sig, snr_2)
+            file_name = '{:05d}.npy'.format(i)
+            file_path1 = os.path.join(r1_dir, file_name)
+            file_path2 = os.path.join(r2_dir, file_name)
+            np.save(file_path1, sig1)
+            np.save(file_path2, sig2)
+    return 0
 
 
 def awgn(sig, p1):
@@ -174,98 +157,6 @@ def try_spwvd():
 # try_spwvd()
 
 
-def signal_raw_generate_for_down(noise_eval=False):
-    """
-    为下采样网络训练提供不加噪数据进行微调训练
-    或加噪数据进行评估   其余复制粘贴  应该使用多进程的-无所谓干
-    :return:1
-    """
-    t = np.arange(0, 400*Ts, Ts)  # 脉冲宽度固定,400个采样点
-    snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
-
-    if noise_eval:
-        save_dir = './raw/down_eval'
-    else:
-        save_dir = './raw/down_train'
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    # CW 载频45MHz 变化范围:1/4到1/2
-    for i in range(1000):
-        fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
-        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))  # raw signal
-        if noise_eval:
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
-        file_path1 = os.path.join(save_dir, file_name)
-        np.save(file_path1, sig)
-
-    # LFW
-    for i in range(1000, 2000):
-        fc = np.random.uniform(Fs / 10, Fs / 8)
-        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400*Ts)  # chirp完它频率不超出-直接抄radar9
-        sig = gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400*Ts)
-        if noise_eval:
-            snr_1 = np.random.choice(snr_list)
-            sig = awgn(sig, snr_1)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(save_dir, file_name)
-        np.save(file_path1, sig)
-
-    # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
-    for i in range(2000, 3000):
-        fc = np.random.uniform(Fs / 6, Fs / 5)
-        sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400*Ts, code_speed=2e6)
-        if noise_eval:
-            snr_1 = np.random.choice(snr_list)
-            sig = awgn(sig, snr_1)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(save_dir, file_name)
-        np.save(file_path1, sig)
-
-    # 2FSK
-    for i in range(3000, 4000):
-        fc = np.random.uniform(25e6, 30e6)
-        fc_delta = np.random.uniform(5e6, 10e6)
-        sig = gen_one_2fsk(fs=Fs, f_c=fc, f_delta=fc_delta, pulse_width=400*Ts, code_speed=2e6)
-        if noise_eval:
-            snr_1 = np.random.choice(snr_list)
-            sig = awgn(sig, snr_1)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(save_dir, file_name)
-        np.save(file_path1, sig)
-
-    # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
-    for i in range(4000, 5000):
-        fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
-        if noise_eval:
-            snr_1 = np.random.choice(snr_list)
-            sig = awgn(sig, snr_1)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(save_dir, file_name)
-        np.save(file_path1, sig)
-
-    # LFM/NLFM
-    for i in range(5000, 6000):
-        fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi*np.random.uniform(6, 8)*np.cos(2e6*t + np.random.uniform(0, 2 * np.pi)))
-        fc = np.random.uniform(Fs / 10, Fs / 8)
-        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
-        sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
-        if noise_eval:
-            snr_1 = np.random.choice(snr_list)
-            sig = awgn(sig, snr_1)
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(save_dir, file_name)
-        np.save(file_path1, sig)
-
-    return 1
-
-# signal_raw_generate_for_down()
-
-
 def process_file(file_path, out_path, win_len, iter_num):
     """处理单个文件的独立函数-复用gen_TFIs重写成多进行处理"""
     try:
@@ -298,129 +189,32 @@ def gen_TFIs_with_CPUs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=3
     print(f"Processed {len(npy_files)} files, {success} succeeded.")
 
 
-# 我又需要新的原始数据了,似乎我需要写一个较为完善的signal_raw_generate
-# 它应该具备指定输出目录, 不加噪,随机加噪,加指定噪,哎?指定噪,要求原始数据一样吗?没必要
-def signal_raw_generate_final(out_path='./raw/final', num=1000, noise='r'):
+def signal_raw_generate_final(out_path='./raw/final', num=200, noise='r'):
     """
     :param num: 不要超过1000否则覆盖
     :param out_path:
     :param noise: r:随机加噪, n:不加噪, num_int:指定信噪比的噪声
     :return:
     """
-    t = np.arange(0, 400 * Ts, Ts)  # 脉冲宽度固定,400个采样点
     snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
     os.makedirs(out_path, exist_ok=True)
-    # CW 载频45MHz 变化范围:1/4到1/2
-    for i in range(num):
-        fc = 45e6 * np.random.uniform(0.25, 0.5)  # 当前载频
-        sig = np.cos(2 * np.pi * fc * t + np.random.uniform(0, 2 * np.pi))  # raw signal
-        if noise == 'r':
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        elif noise == 'n':
-            # 模式2：不添加噪声
-            pass  # 直接跳过加噪步骤
-        elif isinstance(noise, (int, float)):
-            # 模式3：指定信噪比加噪
-            sig = awgn(sig, float(noise))
-        else:
-            raise ValueError("Invalid-noise-parameter.")
-        file_name = '{:04d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
-        file_path1 = os.path.join(out_path, file_name)
-        np.save(file_path1, sig)
-
-    # LFW
-    for i in range(1000, 1000+num):
-        fc = np.random.uniform(Fs / 10, Fs / 8)
-        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)  # chirp完它频率不超出-直接抄radar9
-        sig = gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
-        if noise == 'r':
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        elif noise == 'n':
-            pass
-        elif isinstance(noise, (int, float)):
-            sig = awgn(sig, float(noise))
-        else:
-            raise ValueError("Invalid-noise-parameter.")
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(out_path, file_name)
-        np.save(file_path1, sig)
-
-    # BPSK  现在来看有很大的问题,上面的chirp不对,要随机,还有选出的俩SNR必须要不一样,这个必须规避
-    for i in range(2000, 2000+num):
-        fc = np.random.uniform(Fs / 6, Fs / 5)
-        sig = gen_one_bpsk(fs=Fs, carr_fre=fc, pulse_width=400 * Ts, code_speed=2e6)
-        if noise == 'r':
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        elif noise == 'n':
-            pass
-        elif isinstance(noise, (int, float)):
-            sig = awgn(sig, float(noise))
-        else:
-            raise ValueError("Invalid-noise-parameter.")
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(out_path, file_name)
-        np.save(file_path1, sig)
-
-    # 2FSK
-    for i in range(3000, 3000+num):
-        fc = np.random.uniform(25e6, 30e6)
-        fc_delta = np.random.uniform(5e6, 10e6)
-        sig = gen_one_2fsk(fs=Fs, f_c=fc, f_delta=fc_delta, pulse_width=400 * Ts, code_speed=2e6)
-        if noise == 'r':
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        elif noise == 'n':
-            pass
-        elif isinstance(noise, (int, float)):
-            sig = awgn(sig, float(noise))
-        else:
-            raise ValueError("Invalid-noise-parameter.")
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(out_path, file_name)
-        np.save(file_path1, sig)
-
-    # NLFM 非线性频率调制,根据其原代码的描述,相位对t求导,得$2\pi f_c $
-    for i in range(4000, 4000+num):
-        fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi * np.random.uniform(6, 8) * np.cos(
-            2e6 * t + np.random.uniform(0, 2 * np.pi)))
-        if noise == 'r':
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        elif noise == 'n':
-            pass
-        elif isinstance(noise, (int, float)):
-            sig = awgn(sig, float(noise))
-        else:
-            raise ValueError("Invalid-noise-parameter.")
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(out_path, file_name)
-        np.save(file_path1, sig)
-
-    # LFM/NLFM
-    for i in range(5000, 5000+num):
-        fc = np.random.uniform(25e6, 30e6)
-        sig = np.cos(2 * np.pi * fc * t - 2 * np.pi * np.random.uniform(6, 8) * np.cos(
-            2e6 * t + np.random.uniform(0, 2 * np.pi)))
-        fc = np.random.uniform(Fs / 10, Fs / 8)
-        chirp = np.random.uniform(Fs / 6, Fs / 5) / (400 * Ts)
-        sig = sig + gen_one_chirp_sig(fs=Fs, carr_fre=fc, chirp_rate=chirp, pulse_width=400 * Ts)
-        if noise == 'r':
-            snr_1 = np.random.choice(snr_list)  # get two diff snr
-            sig = awgn(sig, snr_1)
-        elif noise == 'n':
-            pass
-        elif isinstance(noise, (int, float)):
-            sig = awgn(sig, float(noise))
-        else:
-            raise ValueError("Invalid-noise-parameter.")
-        file_name = '{:04d}.npy'.format(i)
-        file_path1 = os.path.join(out_path, file_name)
-        np.save(file_path1, sig)
-
+    for j in range(0, 12):
+        for i in range(num):
+            sig = get_one_signal(j+1)
+            if noise == 'r':
+                snr_1 = np.random.choice(snr_list)  # get two diff snr
+                sig = awgn(sig, snr_1)
+            elif noise == 'n':
+                # 模式2：不添加噪声
+                pass  # 直接跳过加噪步骤
+            elif isinstance(noise, (int, float)):
+                # 模式3：指定信噪比加噪
+                sig = awgn(sig, float(noise))
+            else:
+                raise ValueError("Invalid-noise-parameter.")
+            file_name = '{:05d}.npy'.format(i)  # 生成文件名，格式为 0000.npy
+            file_path1 = os.path.join(out_path, file_name)
+            np.save(file_path1, sig)
     return 1
 
 

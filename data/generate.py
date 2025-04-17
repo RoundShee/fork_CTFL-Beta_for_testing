@@ -199,7 +199,8 @@ def signal_raw_generate_final(out_path='./raw/final', num=200, noise='r'):
     snr_list = np.arange(-6, 16, 2)  # 信噪比备选表
     os.makedirs(out_path, exist_ok=True)
     for j in range(0, 12):
-        for i in range(num):
+        base_i = j * 1000
+        for i in range(base_i, base_i+num):
             sig = get_one_signal(j+1)
             if noise == 'r':
                 snr_1 = np.random.choice(snr_list)  # get two diff snr
@@ -219,14 +220,19 @@ def signal_raw_generate_final(out_path='./raw/final', num=200, noise='r'):
 
 
 if __name__ == '__main__':  # md,多进程还怪麻烦的
-    pass
-    # signal_raw_generate_final(out_path='./raw/final/n6', num=100, noise=-6)
-    # signal_raw_generate_final(out_path='./raw/final/n4', num=100, noise=-4)
-    # signal_raw_generate_final(out_path='./raw/final/n2', num=100, noise=-2)
-    # signal_raw_generate_final(out_path='./raw/final/n0', num=100, noise=0)
-    # signal_raw_generate_final(out_path='./raw/final/p2', num=100, noise=2)
-    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n6', raw_path='./raw/final/n6')
-    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n4', raw_path='./raw/final/n4')
-    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n2', raw_path='./raw/final/n2')
-    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/n0', raw_path='./raw/final/n0')
-    # gen_TFIs_with_CPUs(out_path='./TFIs30_10/final/p2', raw_path='./raw/final/p2')
+    # signal_raw_generate()
+    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/r1', raw_path='./raw12/r1', iter_num=8)
+    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/r2', raw_path='./raw12/r2', iter_num=8)
+    # pass
+    signal_raw_generate_final(out_path='./raw12/final/n10', num=200, noise=-10)
+    signal_raw_generate_final(out_path='./raw12/final/n6', num=200, noise=-6)
+    signal_raw_generate_final(out_path='./raw12/final/n4', num=200, noise=-4)
+    signal_raw_generate_final(out_path='./raw12/final/n2', num=200, noise=-2)
+    signal_raw_generate_final(out_path='./raw12/final/n0', num=200, noise=0)
+    signal_raw_generate_final(out_path='./raw12/final/p2', num=200, noise=2)
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n10', raw_path='./raw12/final/n10')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n6', raw_path='./raw12/final/n6')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n4', raw_path='./raw12/final/n4')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n2', raw_path='./raw12/final/n2')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n0', raw_path='./raw12/final/n0')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/p2', raw_path='./raw12/final/p2')

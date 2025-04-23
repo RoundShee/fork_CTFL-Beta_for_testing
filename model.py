@@ -97,6 +97,6 @@ class DownStreamModel(nn.Module):
     def forward(self, x):
         out = self.net_backbone(x)  # torch.Size([16, 2048, 1, 1])
         out = torch.flatten(out, 1)
-        out = self.net_projection(out)
+        # out = self.net_projection(out)
         out = self.out(out)
         return out

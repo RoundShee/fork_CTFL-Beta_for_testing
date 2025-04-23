@@ -28,12 +28,12 @@ def save_checkpoint(model, optimizer, args, epoch, down_model=False):
             'model_state_dict': model_state_dict,
             'global_epoch': epoch,
             'optimizer_state_dict': optimizer.state_dict(),
-        }, os.path.join('checkpoints', 'epoch'+str(epoch)+'_pretrain12_20250417.pth'))
+        }, os.path.join('checkpoints', 'epoch'+str(epoch)+'_pretrain12_20250418.pth'))
     else:
         torch.save({
             'model_state_dict': model_state_dict,
             'global_epoch': epoch,
-        }, os.path.join('checkpoints', 'epoch' + str(epoch) + '_down12_20250417.pth'))
+        }, os.path.join('checkpoints', 'epoch' + str(epoch) + '_down12_20250418.pth'))
 
 
 def pre_train(epoch, train_loader, model, optimizer, args, f):

@@ -92,6 +92,52 @@ def gen_fixedPRI(CF=8e6, PW=1e-6, PRI=100e-6, duration=1e-3):
 # 显然，gen_fixedPRI不合适
 
 
+def spwvd_fft_optimized(signal, fs, g, h):
+    length_signal = len(signal)
+    window_length_g = len(g)
+    window_length_h = len(h)
+    max_tau_g = window_length_g // 2
+    max_tau_h = window_length_h // 2
+    M = length_signal
+    K = window_length_g // 2 + 1  # Frequency bins based on window g
+    spwvd_result = np.zeros((K, M), dtype=np.complex128)
+
+    # Precompute the center index for the windows
+    g_center = max_tau_g
+    h_center = max_tau_h
+
+    for m in nb.prange(M):
+        # Determine valid tau range considering both g window and signal boundaries
+        tau_max = min(max_tau_g, m, length_signal - 1 - m)
+        tau = np.arange(-tau_max, tau_max + 1)
+        terms = np.zeros(window_length_g, dtype=np.complex128)
+
+        # Compute signal product terms with g window
+        for i, ta in enumerate(tau):
+            idx1 = m + ta
+            idx2 = m - ta
+            if idx1 >= 0 and idx1 < length_signal and idx2 >= 0 and idx2 < length_signal:
+                g_idx = ta + g_center
+                terms[g_idx] = g[g_idx] * signal[idx1] * np.conj(signal[idx2])
+
+        # Perform FFT on the terms to get frequency components
+        fft_result = np.fft.fft(terms)
+        fft_positive = fft_result[:K]
+
+        # Apply h window in time domain
+        # Determine valid theta range considering h window
+        theta_min = max(-max_tau_h, -m)
+        theta_max = min(max_tau_h, length_signal - 1 - m)
+        for theta in range(theta_min, theta_max + 1):
+            h_idx = theta + h_center
+            if 0 <= h_idx < window_length_h:
+                t_shifted = m + theta
+                if 0 <= t_shifted < M:
+                    spwvd_result[:, t_shifted] += h[h_idx] * fft_positive
+
+    return spwvd_result
+
+
 def get_spwvd(signal, fs, window_length=128):
     """
     通过调用SPWVD函数得到时频图矩阵
@@ -103,8 +149,9 @@ def get_spwvd(signal, fs, window_length=128):
     # windows.gaussian(N, std=N/6) 高斯窗
     # windows.blackman(N) 布莱克曼窗
     # windows.hann(window_length) 汉宁
-    g = np.array(windows.hann(window_length))
-    h = np.array(windows.hann(window_length))
+    g = np.array(windows.gaussian(window_length, std=window_length/6))
+    h = np.array(windows.gaussian(window_length, std=window_length/6))
+    # out_spwvd = spwvd_fft_optimized(signal, fs, g, h)
     out_spwvd = spwvd(signal, fs, g, h)
     return out_spwvd
 

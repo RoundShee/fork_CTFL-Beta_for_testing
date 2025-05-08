@@ -58,3 +58,35 @@ class DownDataset(Dataset):
         img1 = t(img1)
         label = idx // self.split_num
         return img1, label
+
+
+class DownDatasetPre(Dataset):
+    def __init__(self, path, split_num=1000):
+        """split是生成每种调制信号的数量"""
+        self.split_num = split_num  # 后面俩函数可能要用
+        self.file_list = sorted(glob.glob(os.path.join(path, "*.png")),
+                                key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+        img_path = self.file_list[idx]
+        t = T.Compose(
+            [T.Resize((224, 224)), T.ToTensor(), T.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        img1 = Image.open(img_path).convert('RGB')
+        img1 = t(img1)
+        label = idx // self.split_num
+        if label == 0 or label == 1:
+            label1 = 0
+        elif label == 2 or label == 3:
+            label1 = 1
+        elif label == 4 or label == 5:
+            label1 = 2
+        elif label == 6 or label == 7:
+            label1 = 3
+        elif label == 8 or label == 9 or label == 10:
+            label1 = 4
+        elif label == 11:
+            label1 = 5
+        return img1, label1

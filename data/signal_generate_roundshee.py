@@ -349,375 +349,202 @@ def gen_one_2fsk(fs, f_c, f_delta, pulse_width, code_speed, random_phase=1, code
     return out_2fsk
 
 
-# sio.savemat('MATLAB/pulse_sequence.mat', {'pulse_sequence': pulse_sequence})
-# pulse_sequence = gen_fixedPRI(CF=25e6, PW=4e-6, PRI=10e-6, duration=4e-6)  # 测试代码
-# pulse_sequence = gen_one_fre_sig(fs=Fs, carr_fre=25e6, pulse_width=4e-6)  # 单频信号
-# pulse_sequence = gen_one_chirp_sig(fs=Fs, carr_fre=25e6, chirp_rate=2e12, pulse_width=4e-6)  # 线性调频
-# pulse_sequence = gen_one_vee_fre_sig(fs=Fs, carr_fre=25e6, v_rate=-6e12, pulse_width=4e-6)  # V调频
-# pulse_sequence = gen_one_bpsk(fs=Fs, carr_fre=25e6, pulse_width=4e-6, code_speed=2e6)  # bpsk信号  与单频相比不明显
-# pulse_sequence = gen_one_qpsk(fs=Fs, carr_fre=25e6, pulse_width=4e-6, code_speed=2e6)  # qpsk信号
-# pulse_sequence = gen_one_2fsk(fs=Fs, f_c=20e6, f_delta=10e6, pulse_width=4e-6, code_speed=2e6)
-# spwvd_matrix = get_spwvd(pulse_sequence, Fs, window_length=128)
-# plot_spwvd(spwvd_matrix, Fs)
-
-
-def create_12_radar():
+def gen_frank_code(fs, carr_freq, pulse_width, M=4, random_phase=True):
     """
-    根据论文表2-1产生数据集
+    生成Frank编码信号
+    :param fs: 采样率 (Hz)
+    :param carr_freq: 载频 (Hz)
+    :param pulse_width: 脉宽 (秒)
+    :param M: Frank码阶数 (默认4)
+    :param random_phase: 是否添加随机初始相位
+    :return: Frank编码信号 (numpy数组)
     """
-    # radar1
-    save_dir = './resource/small_sample_data_chapter2/train/radar01'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i1 in range(0, 80):
-        f_c = np.random.uniform(Fs/6, Fs/5)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_bpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i1)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 基础参数计算
+    total_samples = int(fs * pulse_width)
+    time_axis = np.arange(total_samples) / fs
 
-    # radar2
-    save_dir = './resource/small_sample_data_chapter2/train/radar02'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i2 in range(0, 80):
-        f_c = np.random.uniform(Fs/12, Fs/10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_bpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i2)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 初始化相位
+    phi_0 = np.random.uniform(0, 2 * np.pi) if random_phase else 0
 
-    # radar3
-    save_dir = './resource/small_sample_data_chapter2/train/radar03'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i3 in range(0, 80):
-        f_c = np.random.uniform(Fs/12, Fs/10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_qpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i3)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 生成Frank相位矩阵
+    frank_matrix = np.zeros((M, M))
+    for i in range(M):
+        for k in range(M):
+            frank_matrix[i, k] = (2 * np.pi * (i * k)) / M
 
-    # radar4
-    save_dir = './resource/small_sample_data_chapter2/train/radar04'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i4 in range(0, 80):
-        f_c = np.random.uniform(Fs / 4, Fs / 3)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_qpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i4)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 展平为相位序列
+    phase_sequence = frank_matrix.flatten()
 
-    # radar5
-    save_dir = './resource/small_sample_data_chapter2/train/radar05'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i5 in range(0, 80):
-        f_c = np.random.uniform(Fs/12, Fs/10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        f_delta = np.random.uniform(Fs/6, Fs/5) - f_c  # 两个相互独立变量的运算法则
-        sequence = gen_one_2fsk(fs=Fs, f_c=f_c, f_delta=f_delta, pulse_width=pul_wid, code_speed=1.2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i5)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 计算码元参数
+    num_chips = M ** 2  # 总码元数
+    chip_duration = pulse_width / num_chips
+    samples_per_chip = int(fs * chip_duration)
 
-    # radar6
-    save_dir = './resource/small_sample_data_chapter2/train/radar06'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i6 in range(0, 80):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        f_delta = np.random.uniform(Fs / 6, Fs / 5) - f_c  # 两个相互独立变量的运算法则
-        sequence = gen_one_2fsk(fs=Fs, f_c=f_c, f_delta=f_delta, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i6)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 生成重复的相位序列
+    repeated_phase = np.repeat(phase_sequence, samples_per_chip)
 
-    # radar7
-    save_dir = './resource/small_sample_data_chapter2/train/radar07'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i7 in range(0, 80):
-        f_c = np.random.uniform(Fs / 6, Fs / 5)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_fre_sig(fs=Fs, carr_fre=f_c, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i7)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 对齐信号长度
+    final_phase = np.resize(repeated_phase, total_samples)
 
-    # radar8
-    save_dir = './resource/small_sample_data_chapter2/train/radar08'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i8 in range(0, 80):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_fre_sig(fs=Fs, carr_fre=f_c, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i8)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 合成信号
+    signal = np.cos(2 * np.pi * carr_freq * time_axis + phi_0 + final_phase)
 
-    # radar9
-    save_dir = './resource/small_sample_data_chapter2/train/radar09'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i9 in range(0, 80):
-        f_c = np.random.uniform(Fs / 10, Fs / 8)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        chirp_rate = np.random.uniform(Fs / 6, Fs / 5) / pul_wid  # 比例还与脉冲宽度有关
-        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=chirp_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i9)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
-
-    # radar10
-    save_dir = './resource/small_sample_data_chapter2/train/radar10'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i10 in range(0, 80):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        chirp_rate = np.random.uniform(Fs / 12, Fs / 10) / pul_wid  # 比例还与脉冲宽度有关
-        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=chirp_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i10)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
-
-    # radar11
-    save_dir = './resource/small_sample_data_chapter2/train/radar11'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i11 in range(0, 80):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        chirp_rate = np.random.uniform(Fs / 12, Fs / 10) / pul_wid  # 比例还与脉冲宽度有关
-        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=-chirp_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i11)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
-
-    # radar12
-    save_dir = './resource/small_sample_data_chapter2/train/radar12'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i12 in range(0, 80):
-        f_c = np.random.uniform(Fs / 6, Fs / 5)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        v_rate = np.random.uniform(Fs / 20, Fs / 15) / pul_wid * 2  # 比例还与脉冲宽度有关
-        sequence = gen_one_vee_fre_sig(fs=Fs, carr_fre=f_c, v_rate=-v_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i12)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
-    return 1
+    return signal
 
 
-def create_12_radar_test(num_test=20):
+def gen_p1_code(fs, carr_freq, pulse_width, M=4, random_phase=True):
     """
-    根据论文表2-1产生数据集
+    生成P1编码信号（多普勒容限优化的多相码）
+    :param fs: 采样率 (Hz)
+    :param carr_freq: 载频 (Hz)
+    :param pulse_width: 脉宽 (秒)
+    :param M: P1码阶数 (默认4)
+    :param random_phase: 是否添加随机初始相位
+    :return: P1编码信号 (numpy数组)
     """
-    # radar1
-    save_dir = './resource/small_sample_data_chapter2/test/radar01'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i1 in range(0, num_test):
-        f_c = np.random.uniform(Fs/6, Fs/5)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_bpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i1)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 基础参数计算
+    total_samples = int(fs * pulse_width)  # 总采样点数
+    time_axis = np.arange(total_samples) / fs  # 时间轴
 
-    # radar2
-    save_dir = './resource/small_sample_data_chapter2/test/radar02'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i2 in range(0, num_test):
-        f_c = np.random.uniform(Fs/12, Fs/10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_bpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i2)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 初始化相位
+    phi_0 = np.random.uniform(0, 2 * np.pi) if random_phase else 0
 
-    # radar3
-    save_dir = './resource/small_sample_data_chapter2/test/radar03'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i3 in range(0, num_test):
-        f_c = np.random.uniform(Fs/12, Fs/10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_qpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i3)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 生成P1相位序列
+    phase_sequence = np.zeros(M ** 2)
+    for i in range(1, M + 1):  # i从1到M
+        for m in range(1, M + 1):  # m从1到M
+            idx = (i - 1) * M + (m - 1)  # 序列索引
+            phase_sequence[idx] = -np.pi * (m - 1) * (2 * i - 1 - M) / M ** 2
 
-    # radar4
-    save_dir = './resource/small_sample_data_chapter2/test/radar04'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i4 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 4, Fs / 3)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_qpsk(fs=Fs, carr_fre=f_c, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i4)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 计算码元参数
+    num_chips = M ** 2  # 总码元数
+    chip_duration = pulse_width / num_chips  # 单个码元时长
+    samples_per_chip = int(fs * chip_duration)  # 每个码元的采样点数
 
-    # radar5
-    save_dir = './resource/small_sample_data_chapter2/test/radar05'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i5 in range(0, num_test):
-        f_c = np.random.uniform(Fs/12, Fs/10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        f_delta = np.random.uniform(Fs/6, Fs/5) - f_c  # 两个相互独立变量的运算法则
-        sequence = gen_one_2fsk(fs=Fs, f_c=f_c, f_delta=f_delta, pulse_width=pul_wid, code_speed=1.2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i5)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 重复相位序列并截断对齐
+    repeated_phase = np.repeat(phase_sequence, samples_per_chip)
+    final_phase = np.resize(repeated_phase, total_samples)
 
-    # radar6
-    save_dir = './resource/small_sample_data_chapter2/test/radar06'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i6 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        f_delta = np.random.uniform(Fs / 6, Fs / 5) - f_c  # 两个相互独立变量的运算法则
-        sequence = gen_one_2fsk(fs=Fs, f_c=f_c, f_delta=f_delta, pulse_width=pul_wid, code_speed=2e6)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i6)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 合成信号
+    signal = np.cos(2 * np.pi * carr_freq * time_axis + phi_0 + final_phase)
 
-    # radar7
-    save_dir = './resource/small_sample_data_chapter2/test/radar07'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i7 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 6, Fs / 5)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_fre_sig(fs=Fs, carr_fre=f_c, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i7)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    return signal
 
-    # radar8
-    save_dir = './resource/small_sample_data_chapter2/test/radar08'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i8 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        sequence = gen_one_fre_sig(fs=Fs, carr_fre=f_c, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i8)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
 
-    # radar9
-    save_dir = './resource/small_sample_data_chapter2/test/radar09'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i9 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 10, Fs / 8)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        chirp_rate = np.random.uniform(Fs / 6, Fs / 5) / pul_wid  # 比例还与脉冲宽度有关
-        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=chirp_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i9)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+def gen_p2_code(fs, carr_freq, pulse_width, M=4, random_phase=True):
+    """
+    生成P2编码信号（多普勒容限优化的多相码）
+    :param fs: 采样率 (Hz)
+    :param carr_freq: 载频 (Hz)
+    :param pulse_width: 脉宽 (秒)
+    :param M: P2码阶数 (默认4)
+    :param random_phase: 是否添加随机初始相位
+    :return: P2编码信号 (numpy数组)
+    """
+    # 基础参数计算
+    total_samples = int(fs * pulse_width)  # 总采样点数
+    time_axis = np.arange(total_samples) / fs  # 时间轴
 
-    # radar10
-    save_dir = './resource/small_sample_data_chapter2/test/radar10'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i10 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        chirp_rate = np.random.uniform(Fs / 12, Fs / 10) / pul_wid  # 比例还与脉冲宽度有关
-        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=chirp_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i10)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 初始化相位
+    phi_0 = np.random.uniform(0, 2 * np.pi) if random_phase else 0
 
-    # radar11
-    save_dir = './resource/small_sample_data_chapter2/test/radar11'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i11 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 12, Fs / 10)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        chirp_rate = np.random.uniform(Fs / 12, Fs / 10) / pul_wid  # 比例还与脉冲宽度有关
-        sequence = gen_one_chirp_sig(fs=Fs, carr_fre=f_c, chirp_rate=-chirp_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i11)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
+    # 生成P2相位序列（核心公式）
+    phase_sequence = np.zeros(M ** 2)
+    for i in range(1, M + 1):  # i从1到M
+        for m in range(1, M + 1):  # m从1到M
+            idx = (i - 1) * M + (m - 1)  # 序列索引
+            phase_sequence[idx] = (np.pi / M ** 2) * (i - 1) * (2 * m - 1 - M)
 
-    # radar12
-    save_dir = './resource/small_sample_data_chapter2/test/radar12'  # 定义保存路径
-    if not os.path.exists(save_dir):  # 如果目录不存在，则创建目录
-        os.makedirs(save_dir)
-    # 生成
-    for i12 in range(0, num_test):
-        f_c = np.random.uniform(Fs / 6, Fs / 5)
-        pul_wid = np.random.uniform(4e-6, 6e-6)
-        v_rate = np.random.uniform(Fs / 20, Fs / 15) / pul_wid * 2  # 比例还与脉冲宽度有关
-        sequence = gen_one_vee_fre_sig(fs=Fs, carr_fre=f_c, v_rate=-v_rate, pulse_width=pul_wid)
-        spwvd_matrix = get_spwvd(sequence, Fs)
-        file_name = '{:03d}.npy'.format(i12)  # 生成文件名，格式为 000.npy - 079.npy
-        file_path = os.path.join(save_dir, file_name)
-        np.save(file_path, spwvd_matrix)  # 保存数据
-    return 1
+    # 计算码元参数
+    num_chips = M ** 2  # 总码元数
+    chip_duration = pulse_width / num_chips  # 单个码元时长
+    samples_per_chip = int(fs * chip_duration)  # 每个码元的采样点数
+
+    # 重复相位序列并截断对齐
+    repeated_phase = np.repeat(phase_sequence, samples_per_chip)
+    final_phase = np.resize(repeated_phase, total_samples)
+
+    # 合成信号
+    signal = np.cos(2 * np.pi * carr_freq * time_axis + phi_0 + final_phase)
+
+    return signal
+
+
+def gen_p3_code(fs, carr_freq, pulse_width, M=4, random_phase=True):
+    """
+    生成P3编码信号（基于LFM相位量化的多相码）
+    :param fs: 采样率 (Hz)
+    :param carr_freq: 载频 (Hz)
+    :param pulse_width: 脉宽 (秒)
+    :param M: 码阶（相位量化阶数，通常为2的幂次）
+    :param random_phase: 是否添加随机初始相位
+    :return: P3编码信号 (numpy数组)
+    """
+    # 基础参数计算
+    total_samples = int(fs * pulse_width)  # 总采样点数
+    time_axis = np.arange(total_samples) / fs  # 时间轴
+
+    # 初始化相位
+    phi_0 = np.random.uniform(0, 2 * np.pi) if random_phase else 0
+
+    # 生成P3相位序列（核心公式）
+    num_chips = M ** 2  # 总码元数
+    phase_sequence = np.zeros(num_chips)
+    for k in range(num_chips):
+        phase_sequence[k] = (np.pi / num_chips) * k ** 2  # 二次相位量化
+
+    # 计算码元参数
+    chip_duration = pulse_width / num_chips  # 单个码元时长
+    samples_per_chip = int(fs * chip_duration)  # 每个码元的采样点数
+
+    # 重复相位序列并截断对齐
+    repeated_phase = np.repeat(phase_sequence, samples_per_chip)
+    final_phase = np.resize(repeated_phase, total_samples)
+
+    # 合成信号
+    signal = np.cos(2 * np.pi * carr_freq * time_axis + phi_0 + final_phase)
+
+    return signal
+
+
+def gen_p4_code(fs, carr_freq, pulse_width, M=4, random_phase=True):
+    """
+    生成P4编码信号（多普勒容限优化的二次相位编码）
+    :param fs: 采样率 (Hz)
+    :param carr_freq: 载频 (Hz)
+    :param pulse_width: 脉宽 (秒)
+    :param M: 码阶（控制相位量化精细度，建议为偶数）
+    :param random_phase: 是否添加随机初始相位
+    :return: P4编码信号 (numpy数组)
+    """
+    # 基础参数计算
+    total_samples = int(fs * pulse_width)  # 总采样点数
+    time_axis = np.arange(total_samples) / fs  # 时间轴
+
+    # 初始化相位
+    phi_0 = np.random.uniform(0, 2 * np.pi) if random_phase else 0
+
+    # 生成P4相位序列（核心公式）
+    num_chips = M ** 2
+    phase_sequence = np.zeros(num_chips)
+    for k in range(num_chips):
+        phase_sequence[k] = (np.pi / M ** 2) * k * (k + 1)  # 关键公式
+
+    # 将相位限制在[0, 2π)范围内
+    phase_sequence = np.mod(phase_sequence, 2 * np.pi)
+
+    # 计算码元参数
+    chip_duration = pulse_width / num_chips  # 单个码元时长
+    samples_per_chip = int(fs * chip_duration)  # 每个码元的采样点数
+
+    # 重复相位序列并截断对齐
+    repeated_phase = np.repeat(phase_sequence, samples_per_chip)
+    final_phase = np.resize(repeated_phase, total_samples)
+
+    # 合成信号
+    signal = np.cos(2 * np.pi * carr_freq * time_axis + phi_0 + final_phase)
+
+    return signal
+
 
 

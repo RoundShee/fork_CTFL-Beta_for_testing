@@ -64,10 +64,10 @@ def plot_combined_curves(data_list, labels, colors, linestyles):
 
 if __name__ == "__main__":
     # 解析两个日志文件
-    log_paths = ["./log_whole20250409.txt", "./log_whole_noProj20250410.txt"]
+    log_paths = ["./log20250505.txt", "./log_who_default20250418.txt"]
     all_data = [parse_log(path) for path in log_paths]
     # 设置曲线样式
-    labels = ["Proj", "noProj"]
+    labels = ["SPWVD", "MSST"]
     colors = ["blue", "red"]
     linestyles = ["-", "--"]
 

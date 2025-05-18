@@ -161,8 +161,8 @@ def process_file(file_path, out_path, win_len, iter_num):
     """处理单个文件的独立函数-复用gen_TFIs重写成多进行处理"""
     try:
         sig_raw = np.load(file_path)
-        # ts, _ = MSST_Y(sig_raw, hlength=win_len, num=iter_num)
-        ts = get_spwvd(sig_raw, Fs, 129)  # 👈Attention
+        ts, _ = MSST_Y(sig_raw, hlength=win_len, num=iter_num)
+        # ts = get_spwvd(sig_raw, Fs, 129)  # 👈Attention
         filename = os.path.basename(file_path)
         output_name = os.path.splitext(filename)[0] + '.png'
         output_path = os.path.join(out_path, output_name)
@@ -180,17 +180,17 @@ def gen_TFIs_with_CPUs(out_path='./TFIs30_10/r1', raw_path='./raw/r1', win_len=3
     os.makedirs(out_path, exist_ok=True)
     npy_files = glob.glob(os.path.join(raw_path, '*.npy'))
     # 👇修改
-    selected_files = [
-        file_path for file_path in npy_files
-        if os.path.splitext(os.path.basename(file_path))[0] > '05037'
-    ]
+    # selected_files = [
+    #     file_path for file_path in npy_files
+    #     if os.path.splitext(os.path.basename(file_path))[0] > '00141'
+    # ]
     # 👆修改
     # 固定参数传递给子进程
     worker = partial(process_file, out_path=out_path, win_len=win_len, iter_num=iter_num)
     # 使用多进程池加速
     # with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
-    with ProcessPoolExecutor(max_workers=10) as executor:
-        results = executor.map(worker, selected_files)  # 👈here
+    with ProcessPoolExecutor(max_workers=2) as executor:
+        results = executor.map(worker, npy_files)  # 👈here
     # 统计成功/失败数量
     success = sum(results)
     print(f"Processed {len(npy_files)} files, {success} succeeded.")
@@ -226,23 +226,19 @@ def signal_raw_generate_final(out_path='./raw/final', num=200, noise='r'):
     return 1
 
 
-if __name__ == '__main__':  # md,多进程还怪麻烦的
-    # signal_raw_generate()
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/r1', raw_path='./raw12/r1', iter_num=8)
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/r2', raw_path='./raw12/r2', iter_num=8)
-    # pass
-    # signal_raw_generate_final(out_path='./raw12/final/n10', num=200, noise=-10)
-    # signal_raw_generate_final(out_path='./raw12/final/n6', num=200, noise=-6)
-    # signal_raw_generate_final(out_path='./raw12/final/n4', num=200, noise=-4)
-    # signal_raw_generate_final(out_path='./raw12/final/n2', num=200, noise=-2)
-    # signal_raw_generate_final(out_path='./raw12/final/n0', num=200, noise=0)
-    # signal_raw_generate_final(out_path='./raw12/final/p2', num=200, noise=2)
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n10', raw_path='./raw12/final/n10')
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n6', raw_path='./raw12/final/n6')
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n4', raw_path='./raw12/final/n4')
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n2', raw_path='./raw12/final/n2')
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n0', raw_path='./raw12/final/n0')
-    # gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/p2', raw_path='./raw12/final/p2')
-
-    gen_TFIs_with_CPUs(out_path='./SPWVD129/r1', raw_path='./raw12/r1', iter_num=8)
-    # gen_TFIs_with_CPUs(out_path='./SPWVD129/r2', raw_path='./raw12/r2', iter_num=8)
+if __name__ == '__main__':
+    signal_raw_generate()
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/r1', raw_path='./raw12/r1', iter_num=8)
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/r2', raw_path='./raw12/r2', iter_num=8)
+    signal_raw_generate_final(out_path='./raw12/final/n10', num=200, noise=-10)
+    signal_raw_generate_final(out_path='./raw12/final/n6', num=200, noise=-6)
+    signal_raw_generate_final(out_path='./raw12/final/n4', num=200, noise=-4)
+    signal_raw_generate_final(out_path='./raw12/final/n2', num=200, noise=-2)
+    signal_raw_generate_final(out_path='./raw12/final/n0', num=200, noise=0)
+    signal_raw_generate_final(out_path='./raw12/final/p2', num=200, noise=2)
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n10', raw_path='./raw12/final/n10')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n6', raw_path='./raw12/final/n6')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n4', raw_path='./raw12/final/n4')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n2', raw_path='./raw12/final/n2')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/n0', raw_path='./raw12/final/n0')
+    gen_TFIs_with_CPUs(out_path='./TFIs12_30_8/final/p2', raw_path='./raw12/final/p2')

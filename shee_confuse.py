@@ -1,7 +1,7 @@
 import torch
 from config import load_args
 from torch.utils.data.dataloader import DataLoader
-from dataset import DownDataset
+from dataset import DownDataset, DownDatasetPre
 from model import Model, DownStreamModel
 import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix, accuracy_score, normalized_mutual_info_score, adjusted_rand_score
@@ -48,15 +48,15 @@ def get_confuse_matrix(pre_model_path='./checkpoints/epoch80_checkpoint_pretrain
 
 if __name__ == '__main__':
     conf_matrix, accuracy, nmi, ari = get_confuse_matrix(
-        pre_model_path='./checkpoints/epoch100_pretrain12_20250418.pth',
-        model_path='./checkpoints/epoch180_down12_20250418.pth',
-        test_path='./data/TFIs12_30_8/final/n10')
+        pre_model_path='./checkpoints/epoch100_pretrain12_spwvd20250428.pth',
+        model_path='./checkpoints/epoch300_down12_20250505.pth',
+        test_path='./data/SPWVD129/final/n2')
     # 可视化混淆矩阵
     plt.figure(figsize=(8, 6))
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
     plt.xlabel('Predicted Labels')
     plt.ylabel('True Labels')
     plt.title('Confusion Matrix')
-    plt.suptitle(f'SNR=-10dB Accuracy={accuracy:.2f}, NMI={nmi:.2f}, ARI={ari:.2f}')
-    plt.savefig('./shee_process/0418_n10_radar12_down180.png', dpi=100, bbox_inches='tight')
+    plt.suptitle(f'SNR=-2dB Accuracy={accuracy:.2f}, NMI={nmi:.2f}, ARI={ari:.2f}')
+    plt.savefig('./shee_process/0505_n2_spwvd.png', dpi=100, bbox_inches='tight')
     plt.show()

@@ -131,7 +131,7 @@ def main(args):
         model = Model(args)  # 这里是首次训练加载模型,先这么改
         if args.cuda:
             model = model.cuda()
-        data = MyDataset("./data/SPWVD129")
+        data = MyDataset("./data/TFIs12_30_8")
         trainloader = DataLoader(data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
         print("pretrain", file = log)
         log.flush()
@@ -153,9 +153,9 @@ def main(args):
         if args.cuda:
             down_model = down_model.cuda()
         # 训练集:又生成了一部分没有加噪的数据作为训练集, 评估集就用r1
-        train_data = DownDatasetPre('./data/SPWVD129/r1', split_num=500)
+        train_data = DownDatasetPre('./data/TFIs12_30_8/r1', split_num=500)
         train_loader = DataLoader(train_data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
-        test_data = DownDatasetPre('./data/SPWVD129/r2',  split_num=500)
+        test_data = DownDatasetPre('./data/TFIs12_30_8/r2',  split_num=500)
         test_loader = DataLoader(test_data, batch_size=16, shuffle=True, drop_last=True, num_workers=4)
         train_eval_down_task(down_model=down_model, down_train_loader=train_loader, down_test_loader=test_loader,
                              args=args, log=log)
